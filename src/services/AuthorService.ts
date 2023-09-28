@@ -1,4 +1,11 @@
 const connection = require('../database/connection');
+const crypto = require('crypto');
+
+interface Author{
+    name: string,
+    biography: string,
+    birthDate: string
+}
 
 class AuthorService{
 
@@ -22,6 +29,17 @@ class AuthorService{
             else{
                 return {status: false, message: "Author not found"};
             }
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, message: "An error occurred"};
+        }
+    }
+
+    async addAuthor(author: Author){
+        try{
+            let id = crypto.randomUUID();
+            await connection.insert({...author, id}).table('authors');
         }
         catch(err){
             console.log(err);

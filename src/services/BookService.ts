@@ -39,8 +39,8 @@ class BookService{
     }
 
     async addBook(book: Book){
-        let id = crypto.randomUUID();
         try{
+            let id = crypto.randomUUID();
             await connection.insert({...book, id}).table('books');
             return {status: true};
         }

@@ -10,7 +10,6 @@ class AuthorController{
 
     async getAuthorById(req: Request, res: Response){
         const id = req.params.authorId;
-        console.log(id);
         const result = await AuthorService.getAuthorById(id);
         if(result.status){
             res.status(200).json(result.author);
@@ -18,6 +17,25 @@ class AuthorController{
         }
         else{
             res.status(404).json(result.message);
+            return;
+        }
+    }
+
+    async addAuthor(req: Request, res: Response){
+        const { name, biography, birthDate } = req.body;
+        if(name && biography && birthDate){
+            const author = {name, biography, birthDate};
+            try{
+                await AuthorService.addAuthor(author);
+                res.sendStatus(201);
+            }
+            catch(err){
+                console.log(err);
+                res.sendStatus(500);
+            }
+        }
+        else{
+            res.sendStatus(400);
             return;
         }
     }
