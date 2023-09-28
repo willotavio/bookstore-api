@@ -11,7 +11,29 @@ class BookController{
     async getBookById(req: Request, res: Response){
         const id = req.params.bookId;
         const result = await BookService.getBookById(id);
-        result.status ? res.status(200).json(result.book) : res.sendStatus(404);
+        if(result.status){
+            res.status(200).json(result.book);
+            return;
+        }
+        res.sendStatus(404);
+    }
+
+    async addBook(req: Request, res: Response){
+        let { title, synopsis, releaseDate, price, authorId } = req.body;
+        if(title && synopsis && releaseDate && price && authorId){
+            parseFloat(price);
+            const book = { title, synopsis, releaseDate, price, authorId };
+            const result = await BookService.addBook(book);
+            if(result.status){
+                res.sendStatus(201);
+                return;
+            }
+            else{
+                res.status(500).json(result.message);
+                return;
+            }
+        }
+        res.sendStatus(400);
     }
 
 }

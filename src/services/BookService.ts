@@ -1,4 +1,13 @@
 const connection = require('../database/connection');
+const crypto = require('crypto');
+
+interface Book{
+    title: string,
+    synopsis: string,
+    releaseDate: string,
+    price: number,
+    authorId: string
+}
 
 class BookService{
 
@@ -26,6 +35,18 @@ class BookService{
         catch(err){
             console.log(err);
             return {status: false, message: "An error occurred"};
+        }
+    }
+
+    async addBook(book: Book){
+        let id = crypto.randomUUID();
+        try{
+            await connection.insert({...book, id}).table('books');
+            return {status: true};
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, message: "This author does not exists"};
         }
     }
 
