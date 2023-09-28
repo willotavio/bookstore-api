@@ -5,7 +5,7 @@ class BookController{
 
     async getBooks(req: Request, res: Response){
         const result = await BookService.getBooks();
-        res.status(200).json(result);
+        result.status ? res.status(200).json(result.books) : res.status(500).json(result.message);
     }
 
     async getBookById(req: Request, res: Response){
