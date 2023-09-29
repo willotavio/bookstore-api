@@ -1,4 +1,13 @@
 import connection from '../database/connection';
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+
+export interface User{
+    name?: string;
+    email?: string;
+    password?: string;
+    role?: number;
+}
 
 class UserService{
 
@@ -26,6 +35,22 @@ class UserService{
         catch(err){
             console.log(err);
             return {status: false, error: err, message: "An error occurred"}
+        }
+    }
+
+    async addUser(user: User){
+        try{
+            const id = crypto.randomUUID();
+            const salt = await bcrypt.genSalt(10);
+            if(user.password){
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+            await connection.insert({...user, id}).table('users');
+            return {status: true, user};
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, error: err, message: "An error occurred"};
         }
     }
 
