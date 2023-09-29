@@ -1,14 +1,12 @@
-const express = require('express');
+import express from 'express';
 const app = express();
 
-app.use(express.urlencoded({
-    extends: false
-}));
+app.use(express.urlencoded());
 app.use(express.json());
 
-const bookRouter = require('./routes/BookRouter');
+import bookRouter from './routes/BookRouter';
 app.use('/book', bookRouter);
-const authorRouter = require('./routes/AuthorRouter');
+import authorRouter from './routes/AuthorRouter';
 app.use('/author', authorRouter);
 
 app.listen(3000, () => {

@@ -9,4 +9,4 @@ const connection = require('knex')({
     }
 });
 
-export = connection;
+export default connection;

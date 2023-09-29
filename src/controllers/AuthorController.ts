@@ -1,4 +1,5 @@
-const AuthorService = require('../services/AuthorService');
+import { Author} from '../services/AuthorService';
+import AuthorService from '../services/AuthorService';
 import { Request, Response, NextFunction } from 'express';
 
 class AuthorController{
@@ -32,6 +33,38 @@ class AuthorController{
             catch(err){
                 console.log(err);
                 res.sendStatus(500);
+            }
+        }
+        else{
+            res.sendStatus(400);
+            return;
+        }
+    }
+
+    async updateAuthor(req: Request, res: Response){
+        const id = req.params.authorId;
+        const { name, biography, birthDate } = req.body;
+        if(name || biography || birthDate){
+            let author: Author = {};
+            if(name){
+                author.name = name;
+            }
+            if(biography){
+                author.biography = biography;
+            }
+            if(birthDate){
+                author.birthDate = birthDate;
+            }
+            const result = await AuthorService.updateAuthor(id, author);
+            if(result.status){
+                res.sendStatus(200);
+                return;
+            }
+            else if(result.error){
+                res.sendStatus(500);
+            }
+            else{
+                res.status(404).json(result.message);
             }
         }
         else{

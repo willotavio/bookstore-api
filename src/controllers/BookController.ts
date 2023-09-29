@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-const BookService = require('../services/BookService');
+import BookService from '../services/BookService';
 
 class BookController{
 
@@ -38,4 +38,4 @@ class BookController{
 
 }
 
-export = new BookController();
+export default new BookController();

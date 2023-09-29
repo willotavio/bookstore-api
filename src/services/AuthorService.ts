@@ -1,10 +1,10 @@
-const connection = require('../database/connection');
-const crypto = require('crypto');
+import connection from '../database/connection';
+import crypto from 'crypto';
 
-interface Author{
-    name: string,
-    biography: string,
-    birthDate: string
+export interface Author {
+    name?: string;
+    biography?: string;
+    birthDate?: string;
 }
 
 class AuthorService{
@@ -47,6 +47,22 @@ class AuthorService{
         }
     }
 
+    async updateAuthor(id: string, author: Author){
+        try{
+            const authorExists = await this.getAuthorById(id);
+            if(authorExists.status){
+                await connection.update(author).table('authors').where("id", id);
+                return {status: true};
+            }
+            else{
+                return {status: false, message: "Author not found"};
+            }
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, error: err, message: "An error occurred"};
+        }
+    }
 }
 
-export = new AuthorService();
+export default new AuthorService();

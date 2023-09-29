@@ -1,5 +1,5 @@
-const connection = require('../database/connection');
-const crypto = require('crypto');
+import connection from '../database/connection';
+import crypto from 'crypto';
 
 interface Book{
     title: string,
@@ -52,4 +52,4 @@ class BookService{
 
 }
 
-export = new BookService();
+export default new BookService();
