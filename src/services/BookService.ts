@@ -1,12 +1,12 @@
 import connection from '../database/connection';
 import crypto from 'crypto';
 
-interface Book{
-    title: string,
-    synopsis: string,
-    releaseDate: string,
-    price: number,
-    authorId: string
+export interface Book{
+    title?: string,
+    synopsis?: string,
+    releaseDate?: string,
+    price?: number,
+    authorId?: string
 }
 
 class BookService{
@@ -47,6 +47,40 @@ class BookService{
         catch(err){
             console.log(err);
             return {status: false, message: "This author does not exists"};
+        }
+    }
+
+    async updateBook(id: string, book: Book){
+        try{
+            const bookExists = await this.getBookById(id);
+            if(bookExists.status){
+                await connection.update(book).table('books').where('id', id);
+                return {status: true};
+            }
+            else{
+                return {status: false, message: bookExists.message};
+            }
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, error: err, message: "An error occurred"};
+        }
+    }
+
+    async deleteBook(id: string){
+        try{
+            const bookExists = await this.getBookById(id);
+            if(bookExists.status){
+                await connection.del().table('books').where('id', id);
+                return {status: true};
+            }
+            else{
+                return {status: false, message: bookExists.message};
+            }
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, error: err, message: "An error occurred"};
         }
     }
 
