@@ -62,13 +62,32 @@ class AuthorController{
             }
             else if(result.error){
                 res.sendStatus(500);
+                return
             }
             else{
                 res.status(404).json(result.message);
+                return;
             }
         }
         else{
             res.sendStatus(400);
+            return;
+        }
+    }
+
+    async deleteAuthor(req: Request, res: Response){
+        const id = req.params.authorId;
+        const result = await AuthorService.deleteAuthor(id);
+        if(result.status){
+            res.sendStatus(200);
+            return;
+        }
+        else if(result.error){
+            res.sendStatus(500);
+            return;
+        }
+        else{
+            res.status(404).json(result.message);
             return;
         }
     }

@@ -6,5 +6,6 @@ router.get('/', AuthorController.getAuthors);
 router.get('/:authorId', AuthorController.getAuthorById);
 router.post('/', AuthorController.addAuthor);
 router.put('/:authorId', AuthorController.updateAuthor);
+router.delete('/:authorId', AuthorController.deleteAuthor);
 
 export = router; 

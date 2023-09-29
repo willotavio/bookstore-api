@@ -51,7 +51,24 @@ class AuthorService{
         try{
             const authorExists = await this.getAuthorById(id);
             if(authorExists.status){
-                await connection.update(author).table('authors').where("id", id);
+                await connection.update(author).table('authors').where('id', id);
+                return {status: true};
+            }
+            else{
+                return {status: false, message: "Author not found"};
+            }
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, error: err, message: "An error occurred"};
+        }
+    }
+
+    async deleteAuthor(id: string){
+        try{
+            const authorExists = await this.getAuthorById(id);
+            if(authorExists.status){
+                await connection.del().table('authors').where('id', id);    
                 return {status: true};
             }
             else{
