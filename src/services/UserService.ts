@@ -1,6 +1,14 @@
 import connection from '../database/connection';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import JWT_SECRET from '../config';
+
+interface LoginResult{
+    status: boolean,
+    token?: string;
+    message?: string;
+}
 
 export interface User{
     name?: string;
@@ -38,6 +46,22 @@ class UserService{
         }
     }
 
+    async getUserByEmail(email: string){
+        try{
+            const user = await connection.select().table('users').where('email', email);
+            if(user.length > 0){
+                return {status: true, user};
+            }
+            else{
+                return {status: false, message: "User not found"};
+            }
+        }
+        catch(err){
+            console.log(err);
+            return {status: false, error: err, message: "An error occurred"};
+        }
+    }
+
     async addUser(user: User){
         try{
             const id = crypto.randomUUID();
@@ -51,6 +75,29 @@ class UserService{
         catch(err){
             console.log(err);
             return {status: false, error: err, message: "An error occurred"};
+        }
+    }
+
+    async login(email: string, password: string): Promise<LoginResult>{
+        const user = await this.getUserByEmail(email);
+        if(user.user){
+            const passwordMatches = await bcrypt.compare(password, user.user[0].password);
+            if(passwordMatches){
+                return new Promise((resolve, reject) => {
+                    jwt.sign({id: user.user[0].id, email: user.user[0].email}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+                        if(token){
+                            resolve({status: true, token: token});    
+                        }
+                        reject({status: false, error: err, message: "An error occurred during token generation"});
+                    })
+                })
+            }
+            else{
+                return {status: false, message: "Invalid password"};
+            }
+        }
+        else{
+            return {status: false, message: "Invalid email"};
         }
     }
 
