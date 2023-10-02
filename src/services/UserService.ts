@@ -101,6 +101,43 @@ class UserService{
         }
     }
 
+    async updateUser(user: User, id: string){
+        const userExists = await this.getUserById(id);
+        if(userExists.status){
+            try{
+                const salt = await bcrypt.genSalt(10); 
+                const password = await bcrypt.hash(user.password || "", salt);
+                user.password = password;
+                await connection.update(user).table('users').where('id', id);
+                return {status: true};
+            }
+            catch(err){
+                console.log(err);
+                return {status: false, error: err, message: "An error occurred"};
+            }
+        }
+        else{
+            return {status: false, message: "User not found"};
+        }
+    }
+
+    async deleteUser(id: string){
+        const userExists = await this.getUserById(id);
+        if(userExists.status){
+            try{
+                await connection.del().table('users').where('id', id);
+                return {status: true};
+            }
+            catch(err){
+                console.log(err);
+                return {status: false, error: err, message: "An error occurred"};
+            }
+        }
+        else{
+            return {status: false, message: "User not found"};
+        }
+    }
+
 }
 
 export default new UserService();

@@ -18,7 +18,6 @@ export const authMiddleware = (req: TokenRequest, res: Response, next: NextFunct
             }
             req.token = token;
             req.loggedUser = {data};
-            console.log(data);
             next();
         });
     }

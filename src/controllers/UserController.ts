@@ -70,6 +70,48 @@ class UserController{
         }
     }
 
+    async updateUser(req: Request, res: Response){
+        const id = req.params.userId;
+        const { name, email, password, role } = req.body;
+        if(name || email || password || role > -1){
+            const user: User = { name, email, password, role};
+            const result = await UserService.updateUser(user, id);
+            if(result.status){
+                res.sendStatus(200);
+                return;
+            }
+            else if(result.error){
+                res.status(500).json(result.error);
+                return;
+            }
+            else{
+                res.status(404).json(result.message);
+                return;
+            }
+        }
+        else{
+            res.sendStatus(400);
+            return;
+        }   
+    }
+
+    async deleteUser(req: Request, res: Response){
+        const id = req.params.userId;
+        const result = await UserService.deleteUser(id);
+        if(result.status){
+            res.sendStatus(200);
+            return;
+        }
+        else if(result.error){
+            res.status(500).json(result.error);
+            return;
+        }
+        else{
+            res.status(404).json(result.message);
+            return;
+        }
+    }
+
 }
 
 export default new UserController();
