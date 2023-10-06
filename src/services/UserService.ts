@@ -7,12 +7,13 @@ import JWT_SECRET from '../config';
 interface LoginResult{
     status: boolean,
     token?: string;
+    user?: User;
     message?: string;
 }
 
 export interface User{
     name?: string;
-    email?: string;
+    email: string;
     password?: string;
     role?: number;
 }
@@ -79,14 +80,15 @@ class UserService{
     }
 
     async login(email: string, password: string): Promise<LoginResult>{
-        const user = await this.getUserByEmail(email);
-        if(user.user){
-            const passwordMatches = await bcrypt.compare(password, user.user[0].password);
+        const userFound = await this.getUserByEmail(email);
+        if(userFound.user){
+            const passwordMatches = await bcrypt.compare(password, userFound.user[0].password);
             if(passwordMatches){
                 return new Promise((resolve, reject) => {
-                    jwt.sign({id: user.user[0].id, email: user.user[0].email}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+                    jwt.sign({id: userFound.user[0].id, email: userFound.user[0].email}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
                         if(token){
-                            resolve({status: true, token: token});    
+                            const { password, ...user } = userFound.user[0];
+                            resolve({status: true, user, token: token});    
                         }
                         reject({status: false, error: err, message: "An error occurred during token generation"});
                     })
@@ -104,16 +106,24 @@ class UserService{
     async updateUser(user: User, id: string){
         const userExists = await this.getUserById(id);
         if(userExists.status){
-            try{
-                const salt = await bcrypt.genSalt(10); 
-                const password = await bcrypt.hash(user.password || "", salt);
-                user.password = password;
-                await connection.update(user).table('users').where('id', id);
-                return {status: true};
+            const emailExists = await this.getUserByEmail(user.email);
+            if(!emailExists.status || userExists.user[0].email === user.email){
+                try{
+                    if(user.password){
+                        const salt = await bcrypt.genSalt(10); 
+                        const password = await bcrypt.hash(user.password, salt);
+                        user.password = password;
+                    }
+                    await connection.update(user).table('users').where('id', id);
+                    return {status: true};
+                }
+                catch(err){
+                    console.log(err);
+                    return {status: false, error: err, message: "An error occurred"};
+                }
             }
-            catch(err){
-                console.log(err);
-                return {status: false, error: err, message: "An error occurred"};
+            else{
+                return {status: false, message: "Email already in use"};
             }
         }
         else{

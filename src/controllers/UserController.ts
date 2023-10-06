@@ -58,7 +58,7 @@ class UserController{
         if(email && password){
             const authenticated = await UserService.login(email, password);
             if(authenticated.status){
-                res.status(200).json({token: authenticated.token});
+                res.status(200).json({user: authenticated.user, token: authenticated.token});
             }
             else{
                 res.sendStatus(401);
