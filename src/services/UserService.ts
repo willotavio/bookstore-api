@@ -85,10 +85,10 @@ class UserService{
             const passwordMatches = await bcrypt.compare(password, userFound.user[0].password);
             if(passwordMatches){
                 return new Promise((resolve, reject) => {
-                    jwt.sign({id: userFound.user[0].id, email: userFound.user[0].email}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+                    jwt.sign({id: userFound.user[0].id, email: userFound.user[0].email, role: userFound.user[0].role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
                         if(token){
                             const { password, ...user } = userFound.user[0];
-                            resolve({status: true, user, token: token});    
+                            resolve({status: true, user, token: token});
                         }
                         reject({status: false, error: err, message: "An error occurred during token generation"});
                     })

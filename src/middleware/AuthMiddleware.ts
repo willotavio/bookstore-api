@@ -4,7 +4,15 @@ import JWT_SECRET from '../config';
 
 export interface TokenRequest extends Request{
     token?: string;
-    loggedUser?: {}
+    loggedUser?: {
+        data: TokenData;
+    }
+}
+
+interface TokenData{
+    id: string,
+    email: string,
+    role: number
 }
 
 export const authMiddleware = (req: TokenRequest, res: Response, next: NextFunction) => {
@@ -16,9 +24,15 @@ export const authMiddleware = (req: TokenRequest, res: Response, next: NextFunct
                 res.sendStatus(401);
                 return;
             }
+            const userData = data as TokenData;
             req.token = token;
-            req.loggedUser = {data};
-            next();
+            req.loggedUser = {data: userData};
+            if(userData.role >= 2){
+                next();
+            }
+            else{
+                res.status(401).json({message: "Not an admin"});
+            }
         });
     }
     else{
