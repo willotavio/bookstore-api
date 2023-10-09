@@ -1,12 +1,12 @@
 import express from 'express';
 const router = express.Router();
 import AuthorController from '../controllers/AuthorController';
-import { authMiddleware } from '../middleware/AuthMiddleware';
+import { adminMiddleware } from '../middleware/AdminMiddleware';
 
 router.get('/', AuthorController.getAuthors);
 router.get('/:authorId', AuthorController.getAuthorById);
-router.post('/', authMiddleware, AuthorController.addAuthor);
-router.put('/:authorId', authMiddleware, AuthorController.updateAuthor);
-router.delete('/:authorId', authMiddleware, AuthorController.deleteAuthor);
+router.post('/', adminMiddleware, AuthorController.addAuthor);
+router.put('/:authorId', adminMiddleware, AuthorController.updateAuthor);
+router.delete('/:authorId', adminMiddleware, AuthorController.deleteAuthor);
 
 export = router; 

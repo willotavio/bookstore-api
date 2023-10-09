@@ -15,7 +15,7 @@ interface TokenData{
     role: number
 }
 
-export const authMiddleware = (req: TokenRequest, res: Response, next: NextFunction) => {
+export const mainAdminMiddleware = (req: TokenRequest, res: Response, next: NextFunction) => {
     const authToken = req.headers['authorization'];
     if(authToken){
         const token = authToken.split(" ")[1];
@@ -27,11 +27,11 @@ export const authMiddleware = (req: TokenRequest, res: Response, next: NextFunct
             const userData = data as TokenData;
             req.token = token;
             req.loggedUser = {data: userData};
-            if(userData.role >= 2){
+            if(userData.role >= 3){
                 next();
             }
             else{
-                res.status(401).json({message: "Not an admin"});
+                res.status(401).json({message: "Not an main admin"});
             }
         });
     }
