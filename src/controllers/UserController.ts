@@ -27,11 +27,14 @@ class UserController{
     }
 
     async addUser (req: Request, res: Response){
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, profilePicture } = req.body;
         if(name && email && password && role > 0){
             const emailExists = await UserService.getUserByEmail(email);
             if(!emailExists.status){
                 const user: User = {name, email, password, role};
+                if(profilePicture.length > 0){
+                    user.profilePicture = profilePicture;
+                }
                 const result = await UserService.addUser(user);
                 if(result.status){
                     res.sendStatus(201);

@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import JWT_SECRET from '../config';
+import fs from 'fs';
+import path from 'path';
 
 interface LoginResult{
     status: boolean,
@@ -16,6 +18,7 @@ export interface User{
     email: string;
     password?: string;
     role?: number;
+    profilePicture?: string
 }
 
 class UserService{
@@ -66,11 +69,24 @@ class UserService{
     async addUser(user: User){
         try{
             const id = crypto.randomUUID();
+            
+            let relativePath = null;
+            if(user.profilePicture){
+                const pictureBuffer = Buffer.from(user.profilePicture, 'base64');
+                relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
+                let absolutePath = path.join(__dirname, '..', '..', relativePath);
+                fs.writeFile(absolutePath, pictureBuffer, (err) => {
+                    if(err){
+                        console.log(err);
+                        return {status: false, error: err, message: "Error saving the image"};
+                    }
+                });
+            }
             const salt = await bcrypt.genSalt(10);
             if(user.password){
                 user.password = await bcrypt.hash(user.password, salt);
             }
-            await connection.insert({...user, id}).table('users');
+            await connection.insert({...user, id, profilePicture: relativePath}).table('users');
             return {status: true, user};
         }
         catch(err){
