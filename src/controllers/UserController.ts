@@ -57,11 +57,14 @@ class UserController{
     }
 
     async registerAccount (req: Request, res: Response){
-        const { name, email, password } = req.body;
+        const { name, email, password, profilePicture } = req.body;
         if(name && email && password){
             const emailExists = await UserService.getUserByEmail(email);
             if(!emailExists.status){
                 const user: User = {name, email, password, role: 1};
+                if(profilePicture.length > 0){
+                    user.profilePicture = profilePicture;
+                }
                 const result = await UserService.addUser(user);
                 if(result.status){
                     res.sendStatus(201);
@@ -102,9 +105,12 @@ class UserController{
 
     async updateUser(req: Request, res: Response){
         const id = req.params.userId;
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, profilePicture } = req.body;
         if(name || email || password || role > -1){
             const user: User = { name, email, password, role};
+            if(profilePicture){
+                user.profilePicture = profilePicture;
+            }
             const result = await UserService.updateUser(user, id);
             if(result.status){
                 res.sendStatus(200);
