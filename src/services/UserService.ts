@@ -121,15 +121,18 @@ class UserService{
     async updateUser(user: User, id: string){
         const userExists = await this.getUserById(id);
         if(userExists.status){
-            const emailExists = await this.getUserByEmail(user.email);
-            if(!emailExists.status || userExists.user[0].email === user.email){
+            let emailExists: boolean = false;
+            if(user.email){
+                emailExists = (await this.getUserByEmail(user.email)).status;
+            }
+            if(!user.email || !emailExists || userExists.user[0].email === user.email){
                 try{
                     if(user.password){
-                        const salt = await bcrypt.genSalt(10); 
+                        const salt = await bcrypt.genSalt(10);
                         const password = await bcrypt.hash(user.password, salt);
                         user.password = password;
                     }
-                    let relativePath = null;
+                    let relativePath = userExists.user[0].profilePicture;
                     if(user.profilePicture){
                         const pictureBuffer = Buffer.from(user.profilePicture, 'base64');
                         relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
@@ -141,8 +144,12 @@ class UserService{
                             }
                         });
                     }
+                    if(!user.role){
+                        user.role === userExists.user[0].role;
+                    }
                     await connection.update({...user, profilePicture: relativePath}).table('users').where('id', id);
-                    return {status: true};
+                    const updatedUser = await this.getUserById(id);
+                    return {status: true, user: updatedUser};
                 }
                 catch(err){
                     console.log(err);

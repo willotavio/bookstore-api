@@ -106,14 +106,42 @@ class UserController{
     async updateUser(req: Request, res: Response){
         const id = req.params.userId;
         const { name, email, password, role, profilePicture } = req.body;
-        if(name || email || password || role > -1){
+        if(name || email || password || role > 0){
             const user: User = { name, email, password, role};
             if(profilePicture){
                 user.profilePicture = profilePicture;
             }
             const result = await UserService.updateUser(user, id);
             if(result.status){
-                res.sendStatus(200);
+                res.status(200).json(result.user);
+                return;
+            }
+            else if(result.error){
+                res.status(500).json(result.error);
+                return;
+            }
+            else{
+                res.status(404).json(result.message);
+                return;
+            }
+        }
+        else{
+            res.sendStatus(400);
+            return;
+        }   
+    }
+
+    async updateProfile(req: Request, res: Response){
+        const id = req.params.userId;
+        const { name, email, password, profilePicture } = req.body;
+        if(name || email || password){
+            const user: User = { name, email, password};
+            if(profilePicture){
+                user.profilePicture = profilePicture;
+            }
+            const result = await UserService.updateUser(user, id);
+            if(result.status){
+                res.status(200).json(result.user);
                 return;
             }
             else if(result.error){
