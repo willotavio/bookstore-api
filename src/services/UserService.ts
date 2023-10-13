@@ -165,6 +165,34 @@ class UserService{
         }
     }
 
+    async changePassword(id: string, newPassword: string, currentPassword: string){
+        const userExists = await this.getUserById(id);
+        if(userExists.status){
+            try{
+                const passwordMatches = await bcrypt.compare(currentPassword, userExists.user[0].password);
+                console.log(passwordMatches);
+                if(passwordMatches){
+                    if((await this.updateUser({password: newPassword} as User, id)).status){
+                        return {status: true, message: "Password changed"};
+                    }
+                    else{
+                        return {status: false, message: "An error occurred"};
+                    }
+                }
+                else{
+                    return {status: false, message: "Wrong password"}
+                }
+            }
+            catch(err){
+                console.log(err);
+                return {status: false, error: err, message: "An error occurred"};
+            }
+        }
+        else{
+            return {status: false, message: "User not found"};
+        }
+    }
+
     async deleteUser(id: string){
         const userExists = await this.getUserById(id);
         if(userExists.status){

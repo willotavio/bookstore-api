@@ -57,12 +57,16 @@ class UserController{
     }
 
     async registerAccount (req: Request, res: Response){
-        const { name, email, password, profilePicture } = req.body;
-        if(name && email && password){
+        const { name, email, password, confirmPassword, profilePicture } = req.body;
+        if(name && email && password && confirmPassword){
+            if(password !== confirmPassword){
+                res.status(400).json({message: "Passwords doesn't match"});
+                return;
+            }
             const emailExists = await UserService.getUserByEmail(email);
             if(!emailExists.status){
                 const user: User = {name, email, password, role: 1};
-                if(profilePicture.length > 0){
+                if(profilePicture && profilePicture.length > 0){
                     user.profilePicture = profilePicture;
                 }
                 const result = await UserService.addUser(user);
@@ -133,7 +137,11 @@ class UserController{
 
     async updateProfile(req: Request, res: Response){
         const id = req.params.userId;
-        const { name, email, password, profilePicture } = req.body;
+        const { name, email, password, confirmPassword, profilePicture } = req.body;
+        if(password && password !== confirmPassword){
+            res.status(400).json({message: "Passwords doesn't match"});
+            return;
+        }
         if(name || email || password){
             const user: User = { name, email, password};
             if(profilePicture){
@@ -157,6 +165,34 @@ class UserController{
             res.sendStatus(400);
             return;
         }   
+    }
+
+    async changePassword(req: Request, res: Response){
+        const id = req.params.userId;
+        const { newPassword, confirmNewPassword, currentPassword } = req.body;
+        if(newPassword !== confirmNewPassword){
+            res.status(400).json({message: "Passwords doesn't match"});
+            return;
+        }
+        if(newPassword && currentPassword){
+            const result = await UserService.changePassword(id, newPassword, currentPassword);
+            if(result.status){
+                res.sendStatus(200);
+                return;
+            }
+            else if(result.error){
+                res.status(500).json({message: result.message});
+                return;
+            }
+            else{
+                res.status(401).json({message: result.message});
+                return;
+            }
+        }
+        else{
+            res.sendStatus(400);
+            return;
+        }
     }
 
     async deleteUser(req: Request, res: Response){

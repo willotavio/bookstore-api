@@ -31,7 +31,7 @@ export const mainAdminMiddleware = (req: TokenRequest, res: Response, next: Next
                 next();
             }
             else{
-                res.status(401).json({message: "Not an main admin"});
+                res.status(401).json({message: "Not a main admin"});
             }
         });
     }

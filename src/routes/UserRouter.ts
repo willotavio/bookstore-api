@@ -7,7 +7,6 @@ import { userMiddleware } from '../middleware/UserMiddleware';
 router.get('/', mainAdminMiddleware, UserController.getUsers);
 router.get('/:userId', mainAdminMiddleware, UserController.getUserById);
 router.post('/', mainAdminMiddleware, UserController.addUser);
-router.post('/register', UserController.registerAccount);
 router.put('/:userId', mainAdminMiddleware, UserController.updateUser);
 router.put('/update/:userId', userMiddleware, UserController.updateProfile);
 router.delete('/:userId', mainAdminMiddleware, UserController.deleteUser);
