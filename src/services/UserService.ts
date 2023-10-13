@@ -170,7 +170,6 @@ class UserService{
         if(userExists.status){
             try{
                 const passwordMatches = await bcrypt.compare(currentPassword, userExists.user[0].password);
-                console.log(passwordMatches);
                 if(passwordMatches){
                     if((await this.updateUser({password: newPassword} as User, id)).status){
                         return {status: true, message: "Password changed"};
@@ -193,12 +192,18 @@ class UserService{
         }
     }
 
-    async deleteUser(id: string){
+    async deleteUser(id: string, password?: string){
         const userExists = await this.getUserById(id);
         if(userExists.status){
             try{
+                if(password){
+                    const passwordMatches = await bcrypt.compare(password, userExists.user[0].password);
+                    if(!passwordMatches){
+                        return {status: false, message: "Invalid password"};
+                    }    
+                }
                 await connection.del().table('users').where('id', id);
-                return {status: true};
+                return {status: true, message: "Deleted successfully"};
             }
             catch(err){
                 console.log(err);

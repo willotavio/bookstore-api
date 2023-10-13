@@ -4,8 +4,9 @@ import { userMiddleware } from '../middleware/UserMiddleware';
 
 const router = express.Router();
 
-router.post('/', UserController.login);
+router.post('/login', UserController.login);
 router.post('/register', UserController.registerAccount);
 router.post('/change-password/:userId', userMiddleware, UserController.changePassword);
+router.delete('/:userId', userMiddleware, UserController.deleteProfile);
 
 export default router;

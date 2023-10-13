@@ -98,7 +98,7 @@ class UserController{
                 res.status(200).json({user: authenticated.user, token: authenticated.token});
             }
             else{
-                res.sendStatus(401);
+                res.status(401).json({message: authenticated.message});
             }
         }
         else{
@@ -177,7 +177,7 @@ class UserController{
         if(newPassword && currentPassword){
             const result = await UserService.changePassword(id, newPassword, currentPassword);
             if(result.status){
-                res.sendStatus(200);
+                res.status(200).json({message: result.message});
                 return;
             }
             else if(result.error){
@@ -208,6 +208,30 @@ class UserController{
         }
         else{
             res.status(404).json(result.message);
+            return;
+        }
+    }
+
+    async deleteProfile(req: Request, res: Response){
+        const id = req.params.userId;
+        const { password, confirmPassword } = req.body;
+        if(password && confirmPassword){
+            if(password !== confirmPassword){
+                res.status(400).json({message: "Passwords doesn't match"});
+                return;
+            }
+            const result = await UserService.deleteUser(id, password);
+            if(result.status){
+                res.status(200).json({message: result.message});
+                return;
+            }
+            else{
+                res.status(401).json({message: result.message});
+                return;
+            }
+        }
+        else{
+            res.status(400).json({message: "Provide the password correctly"});
             return;
         }
     }
