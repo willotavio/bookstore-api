@@ -21,7 +21,7 @@ export const mainAdminMiddleware = (req: TokenRequest, res: Response, next: Next
         const token = authToken.split(" ")[1];
         jwt.verify(token, JWT_SECRET.JWT_SECRET, (err, data) => {
             if(err){
-                res.sendStatus(401);
+                res.status(401).json({message: "Unauthorized"});
                 return;
             }
             const userData = data as TokenData;

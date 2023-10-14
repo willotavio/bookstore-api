@@ -6,17 +6,17 @@ class BookController{
 
     async getBooks(req: Request, res: Response){
         const result = await BookService.getBooks();
-        result.status ? res.status(200).json(result.books) : res.status(500).json(result.message);
+        result.status ? res.status(200).json({books: result.books}) : res.status(500).json({message: result.message});
     }
 
     async getBookById(req: Request, res: Response){
         const id = req.params.bookId;
         const result = await BookService.getBookById(id);
         if(result.status){
-            res.status(200).json(result.book);
+            res.status(200).json({book: result.book});
             return;
         }
-        res.sendStatus(404);
+        res.status(404).json({message: result.message});
     }
 
     async addBook(req: Request, res: Response){
@@ -26,15 +26,15 @@ class BookController{
             const book = { title, synopsis, releaseDate, price, authorId };
             const result = await BookService.addBook(book);
             if(result.status){
-                res.sendStatus(201);
+                res.status(201).json({message: result.message});
                 return;
             }
             else{
-                res.status(500).json(result.message);
+                res.status(500).json({message: result.message});
                 return;
             }
         }
-        res.sendStatus(400);
+        res.status(400).json({message: "Provide the correct information"});
     }
 
     async updateBook(req: Request, res: Response){
@@ -59,16 +59,16 @@ class BookController{
             }
             const result = await BookService.updateBook(id, book);
             if(result.status){
-                res.sendStatus(200);
+                res.status(200).json({message: result.message});
                 return;
             }
             else{
-                res.status(404).json(result.message);
+                res.status(404).json({message: result.message});
                 return;
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct information"});
             return;
         }
     }
@@ -77,15 +77,15 @@ class BookController{
         const id = req.params.bookId;
         const result = await BookService.deleteBook(id);
         if(result.status){
-            res.sendStatus(200);
+            res.status(200).json({message: result.message});
             return;
         }
         else if(result.error){
-            res.sendStatus(500);
+            res.status(500).json({error: result.error});
             return;
         }
         else{
-            res.status(404).json(result.message);
+            res.status(404).json({message: result.message});
             return;
         }
     }

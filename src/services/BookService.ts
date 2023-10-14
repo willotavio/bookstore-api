@@ -26,7 +26,7 @@ class BookService{
         try{
             const book = await connection.select().table('books').where('id', id);
             if(book.length > 0){
-                return {status: true, book: book}
+                return {status: true, book: book[0]}
             }
             else{
                 return {status: false, message: "Book not found"}
@@ -42,7 +42,7 @@ class BookService{
         try{
             let id = crypto.randomUUID();
             await connection.insert({...book, id}).table('books');
-            return {status: true};
+            return {status: true, message: "Book created"};
         }
         catch(err){
             console.log(err);
@@ -55,7 +55,7 @@ class BookService{
             const bookExists = await this.getBookById(id);
             if(bookExists.status){
                 await connection.update(book).table('books').where('id', id);
-                return {status: true};
+                return {status: true, message: "Book updated"};
             }
             else{
                 return {status: false, message: bookExists.message};
@@ -72,7 +72,7 @@ class BookService{
             const bookExists = await this.getBookById(id);
             if(bookExists.status){
                 await connection.del().table('books').where('id', id);
-                return {status: true};
+                return {status: true, message: "Book deleted"};
             }
             else{
                 return {status: false, message: bookExists.message};
