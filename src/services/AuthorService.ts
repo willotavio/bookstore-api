@@ -24,7 +24,7 @@ class AuthorService{
         try{
             const author = await connection.select().table('authors').where('id', id);
             if(author.length > 0){
-                return {status: true, author};
+                return {status: true, author: author[0]};
             }
             else{
                 return {status: false, message: "Author not found"};
@@ -40,7 +40,7 @@ class AuthorService{
         try{
             let id = crypto.randomUUID();
             await connection.insert({...author, id}).table('authors');
-            return {status: true, message: "Author created"}
+            return {status: true, message: "Author created"};
         }
         catch(err){
             console.log(err);
@@ -53,7 +53,7 @@ class AuthorService{
             const authorExists = await this.getAuthorById(id);
             if(authorExists.status){
                 await connection.update(author).table('authors').where('id', id);
-                return {status: true};
+                return {status: true, message: "Author updated"};
             }
             else{
                 return {status: false, message: "Author not found"};
@@ -70,7 +70,7 @@ class AuthorService{
             const authorExists = await this.getAuthorById(id);
             if(authorExists.status){
                 await connection.del().table('authors').where('id', id);    
-                return {status: true};
+                return {status: true, message: "Author deleted"};
             }
             else{
                 return {status: false, message: "Author not found"};

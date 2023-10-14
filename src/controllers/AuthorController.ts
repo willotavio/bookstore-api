@@ -6,18 +6,18 @@ class AuthorController{
 
     async getAuthors(req: Request, res: Response){
         const result = await AuthorService.getAuthors();
-        result.status ? res.status(200).json(result.authors) : res.status(500).json(result.message);
+        result.status ? res.status(200).json({authors: result.authors}) : res.status(500).json({message: result.message});
     }
 
     async getAuthorById(req: Request, res: Response){
         const id = req.params.authorId;
         const result = await AuthorService.getAuthorById(id);
         if(result.status){
-            res.status(200).json(result.author);
+            res.status(200).json({author: result.author});
             return;
         }
         else{
-            res.status(404).json(result.message);
+            res.status(404).json({message: result.message});
             return;
         }
     }
@@ -34,16 +34,17 @@ class AuthorController{
                 }
                 else{
                     res.status(500).json({message: result.message});
+                    return;
                 }
             }
             catch(err){
                 console.log(err);
-                res.sendStatus(500);
+                res.status(500).json({message: "An error occurred"});
                 return;
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct informations"});
             return;
         }
     }
@@ -64,20 +65,20 @@ class AuthorController{
             }
             const result = await AuthorService.updateAuthor(id, author);
             if(result.status){
-                res.sendStatus(200);
+                res.status(200).json({message: result.message});
                 return;
             }
             else if(result.error){
-                res.sendStatus(500);
+                res.status(500).json({error: result.error});
                 return
             }
             else{
-                res.status(404).json(result.message);
+                res.status(404).json({message: result.message});
                 return;
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct informations"});
             return;
         }
     }
@@ -86,15 +87,15 @@ class AuthorController{
         const id = req.params.authorId;
         const result = await AuthorService.deleteAuthor(id);
         if(result.status){
-            res.sendStatus(200);
+            res.status(200).json({message: result.message});
             return;
         }
         else if(result.error){
-            res.sendStatus(500);
+            res.status(500).json({error: result.error});
             return;
         }
         else{
-            res.status(404).json(result.message);
+            res.status(404).json({message: result.message});
             return;
         }
     }
