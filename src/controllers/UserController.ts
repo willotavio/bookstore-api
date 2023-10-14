@@ -1,47 +1,51 @@
 import UserService from '../services/UserService';
 import { User } from '../services/UserService';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 
 class UserController{
 
     async getUsers(req: Request, res: Response){
         const result = await UserService.getUsers();
-        result.status ? res.status(200).json(result.users) : res.status(500).json(result.error);
+        result.status ? res.status(200).json({users: result.users}) : res.status(500).json({error: result.error});
     }
 
     async getUserById(req: Request, res: Response){
         const id = req.params.userId;
         const result = await UserService.getUserById(id);
         if(result.status){
-            res.status(200).json(result.user);
+            res.status(200).json({user: result.user});
             return;
         }
         else if(result.error){
-            res.status(500).json(result.message);
+            res.status(500).json({message: result.message});
             return;
         }
         else{
-            res.status(404).json(result.message);
+            res.status(404).json({message: result.message});
             return;
         }
     }
 
     async addUser (req: Request, res: Response){
-        const { name, email, password, role, profilePicture } = req.body;
-        if(name && email && password && role > 0){
+        const { name, email, password, confirmPassword, role, profilePicture } = req.body;
+        if(name && email && password && confirmPassword && role > 0){
+            if(password !== confirmPassword){
+                res.status(400).json({message: "Passwords doesn't match"});
+                return;
+            }
             const emailExists = await UserService.getUserByEmail(email);
             if(!emailExists.status){
                 const user: User = {name, email, password, role};
-                if(profilePicture.length > 0){
+                if(profilePicture && profilePicture.length > 0){
                     user.profilePicture = profilePicture;
                 }
                 const result = await UserService.addUser(user);
                 if(result.status){
-                    res.sendStatus(201);
+                    res.status(201).json({message: result.message});
                     return;
                 }
                 else{
-                    res.status(500).json(result.message);
+                    res.status(500).json({message: result.message});
                     return;
                 }
             }
@@ -51,7 +55,7 @@ class UserController{
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct informations"});
             return;
         }
     }
@@ -71,11 +75,11 @@ class UserController{
                 }
                 const result = await UserService.addUser(user);
                 if(result.status){
-                    res.sendStatus(201);
+                    res.status(201).json({message: result.message});
                     return;
                 }
                 else{
-                    res.status(500).json(result.message);
+                    res.status(500).json({message: result.message});
                     return;
                 }
             }
@@ -85,7 +89,7 @@ class UserController{
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct informations"});
             return;
         }
     }
@@ -102,7 +106,7 @@ class UserController{
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the credentials correctly"});
             return;
         }
     }
@@ -117,31 +121,27 @@ class UserController{
             }
             const result = await UserService.updateUser(user, id);
             if(result.status){
-                res.status(200).json(result.user);
+                res.status(200).json({user: result.user});
                 return;
             }
             else if(result.error){
-                res.status(500).json(result.error);
+                res.status(500).json({error: result.error});
                 return;
             }
             else{
-                res.status(404).json(result.message);
+                res.status(404).json({message: result.message});
                 return;
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct informations"});
             return;
         }   
     }
 
     async updateProfile(req: Request, res: Response){
         const id = req.params.userId;
-        const { name, email, password, confirmPassword, profilePicture } = req.body;
-        if(password && password !== confirmPassword){
-            res.status(400).json({message: "Passwords doesn't match"});
-            return;
-        }
+        const { name, email, password, profilePicture } = req.body;
         if(name || email || password){
             const user: User = { name, email, password};
             if(profilePicture){
@@ -149,20 +149,20 @@ class UserController{
             }
             const result = await UserService.updateUser(user, id);
             if(result.status){
-                res.status(200).json(result.user);
+                res.status(200).json({user: result.user});
                 return;
             }
             else if(result.error){
-                res.status(500).json(result.error);
+                res.status(500).json({errors: result.error});
                 return;
             }
             else{
-                res.status(404).json(result.message);
+                res.status(404).json({message: result.message});
                 return;
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the correct informations"});
             return;
         }   
     }
@@ -190,7 +190,7 @@ class UserController{
             }
         }
         else{
-            res.sendStatus(400);
+            res.status(400).json({message: "Provide the passwords correctly"});
             return;
         }
     }
@@ -199,15 +199,15 @@ class UserController{
         const id = req.params.userId;
         const result = await UserService.deleteUser(id);
         if(result.status){
-            res.sendStatus(200);
+            res.status(200).json({message: "User deleted"});
             return;
         }
         else if(result.error){
-            res.status(500).json(result.error);
+            res.status(500).json({error: result.error});
             return;
         }
         else{
-            res.status(404).json(result.message);
+            res.status(404).json({message: result.message});
             return;
         }
     }

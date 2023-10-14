@@ -38,7 +38,7 @@ class UserService{
         try{
             const user = await connection.select().table('users').where('id', id);
             if(user.length > 0){
-                return {status: true, user};
+                return {status: true, user: user[0]};
             }
             else{
                 return {status: false, message: "User not found"};
@@ -54,7 +54,7 @@ class UserService{
         try{
             const user = await connection.select().table('users').where('email', email);
             if(user.length > 0){
-                return {status: true, user};
+                return {status: true, user: user[0]};
             }
             else{
                 return {status: false, message: "User not found"};
@@ -86,7 +86,7 @@ class UserService{
                 user.password = await bcrypt.hash(user.password, salt);
             }
             await connection.insert({...user, id, profilePicture: relativePath}).table('users');
-            return {status: true, user};
+            return {status: true, message: "User added"};
         }
         catch(err){
             console.log(err);
@@ -97,12 +97,12 @@ class UserService{
     async login(email: string, password: string): Promise<LoginResult>{
         const userFound = await this.getUserByEmail(email);
         if(userFound.user){
-            const passwordMatches = await bcrypt.compare(password, userFound.user[0].password);
+            const passwordMatches = await bcrypt.compare(password, userFound.user.password);
             if(passwordMatches){
                 return new Promise((resolve, reject) => {
-                    jwt.sign({id: userFound.user[0].id, email: userFound.user[0].email, role: userFound.user[0].role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+                    jwt.sign({id: userFound.user.id, email: userFound.user.email, role: userFound.user.role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
                         if(token){
-                            const { password, ...user } = userFound.user[0];
+                            const { password, ...user } = userFound.user;
                             resolve({status: true, user, token: token});
                         }
                         reject({status: false, error: err, message: "An error occurred during token generation"});
@@ -125,14 +125,14 @@ class UserService{
             if(user.email){
                 emailExists = (await this.getUserByEmail(user.email)).status;
             }
-            if(!user.email || !emailExists || userExists.user[0].email === user.email){
+            if(!user.email || !emailExists || userExists.user.email === user.email){
                 try{
                     if(user.password){
                         const salt = await bcrypt.genSalt(10);
                         const password = await bcrypt.hash(user.password, salt);
                         user.password = password;
                     }
-                    let relativePath = userExists.user[0].profilePicture;
+                    let relativePath = userExists.user.profilePicture;
                     if(user.profilePicture){
                         const pictureBuffer = Buffer.from(user.profilePicture, 'base64');
                         relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
@@ -145,11 +145,11 @@ class UserService{
                         });
                     }
                     if(!user.role){
-                        user.role === userExists.user[0].role;
+                        user.role === userExists.user.role;
                     }
                     await connection.update({...user, profilePicture: relativePath}).table('users').where('id', id);
                     const updatedUser = await this.getUserById(id);
-                    return {status: true, user: updatedUser};
+                    return {status: true, user: updatedUser.user};
                 }
                 catch(err){
                     console.log(err);
@@ -169,7 +169,7 @@ class UserService{
         const userExists = await this.getUserById(id);
         if(userExists.status){
             try{
-                const passwordMatches = await bcrypt.compare(currentPassword, userExists.user[0].password);
+                const passwordMatches = await bcrypt.compare(currentPassword, userExists.user.password);
                 if(passwordMatches){
                     if((await this.updateUser({password: newPassword} as User, id)).status){
                         return {status: true, message: "Password changed"};
@@ -197,7 +197,7 @@ class UserService{
         if(userExists.status){
             try{
                 if(password){
-                    const passwordMatches = await bcrypt.compare(password, userExists.user[0].password);
+                    const passwordMatches = await bcrypt.compare(password, userExists.user.password);
                     if(!passwordMatches){
                         return {status: false, message: "Invalid password"};
                     }    

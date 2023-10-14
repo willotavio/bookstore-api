@@ -1,6 +1,6 @@
 import { Author} from '../services/AuthorService';
 import AuthorService from '../services/AuthorService';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 
 class AuthorController{
 
@@ -27,12 +27,19 @@ class AuthorController{
         if(name && biography && birthDate){
             const author = {name, biography, birthDate};
             try{
-                await AuthorService.addAuthor(author);
-                res.sendStatus(201);
+                const result = await AuthorService.addAuthor(author);
+                if(result.status){
+                    res.status(201).json({message: result.message});
+                    return;    
+                }
+                else{
+                    res.status(500).json({message: result.message});
+                }
             }
             catch(err){
                 console.log(err);
                 res.sendStatus(500);
+                return;
             }
         }
         else{
