@@ -71,19 +71,16 @@ class UserService{
             const id = crypto.randomUUID();
             let relativePath = null;
             if(user.profilePicture){
-                const pictureBuffer = Buffer.from(user.profilePicture, 'base64');
-                relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
-                let absolutePath = path.join(__dirname, '..', '..', relativePath);
-                fs.writeFile(absolutePath, pictureBuffer, (err) => {
-                    if(err){
-                        console.log(err);
-                        return {status: false, error: err, message: "Error saving the image"};
-                    }
-                });
+                const pictureSetted = await this.setProfilePicture(relativePath, id, user.profilePicture);
+                if(pictureSetted.status){
+                    relativePath = pictureSetted.relativePath;
+                }
+                else{
+                    return {status: false, message: "Error saving the image"};
+                }
             }
-            const salt = await bcrypt.genSalt(10);
             if(user.password){
-                user.password = await bcrypt.hash(user.password, salt);
+                user.password = await this.hashPassword(user.password);
             }
             await connection.insert({...user, id, profilePicture: relativePath}).table('users');
             return {status: true, message: "User added"};
@@ -97,8 +94,7 @@ class UserService{
     async login(email: string, password: string): Promise<LoginResult>{
         const userFound = await this.getUserByEmail(email);
         if(userFound.user){
-            const passwordMatches = await bcrypt.compare(password, userFound.user.password);
-            if(passwordMatches){
+            if(await this.validatePassword(password, userFound.user.password)){
                 return new Promise((resolve, reject) => {
                     jwt.sign({id: userFound.user.id, email: userFound.user.email, role: userFound.user.role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
                         if(token){
@@ -128,21 +124,17 @@ class UserService{
             if(!user.email || !emailExists || userExists.user.email === user.email){
                 try{
                     if(user.password){
-                        const salt = await bcrypt.genSalt(10);
-                        const password = await bcrypt.hash(user.password, salt);
-                        user.password = password;
+                        user.password = await this.hashPassword(user.password);
                     }
                     let relativePath = userExists.user.profilePicture;
                     if(user.profilePicture){
-                        const pictureBuffer = Buffer.from(user.profilePicture, 'base64');
-                        relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
-                        let absolutePath = path.join(__dirname, '..', '..', relativePath);
-                        fs.writeFile(absolutePath, pictureBuffer, (err) => {
-                            if(err){
-                                console.log(err);
-                                return {status: false, error: err, message: "Error saving the image"};
-                            }
-                        });
+                        const pictureSetted = await this.setProfilePicture(relativePath, id, user.profilePicture);
+                        if(pictureSetted.status){
+                            relativePath = pictureSetted.relativePath;
+                        }
+                        else{
+                            return {status: false, message: "Error saving the image"};
+                        }
                     }
                     if(!user.role){
                         user.role === userExists.user.role;
@@ -169,8 +161,7 @@ class UserService{
         const userExists = await this.getUserById(id);
         if(userExists.status){
             try{
-                const passwordMatches = await bcrypt.compare(currentPassword, userExists.user.password);
-                if(passwordMatches){
+                if(await this.validatePassword(currentPassword, userExists.user.password)){
                     if((await this.updateUser({password: newPassword} as User, id)).status){
                         return {status: true, message: "Password changed"};
                     }
@@ -197,8 +188,7 @@ class UserService{
         if(userExists.status){
             try{
                 if(password){
-                    const passwordMatches = await bcrypt.compare(password, userExists.user.password);
-                    if(!passwordMatches){
+                    if(!(await this.validatePassword(password, userExists.user.password))){
                         return {status: false, message: "Invalid password"};
                     }    
                 }
@@ -213,6 +203,28 @@ class UserService{
         else{
             return {status: false, message: "User not found"};
         }
+    }
+
+    async validatePassword(password: string, encryptedPassword: string){
+        return await bcrypt.compare(password, encryptedPassword);
+    }
+
+    async hashPassword(password: string){
+        const salt = await bcrypt.genSalt(10);
+        return await bcrypt.hash(password, salt);
+    }
+
+    async setProfilePicture(relativePath: string | null, id: string, profilePicture: string){
+        const pictureBuffer = Buffer.from(profilePicture, 'base64');
+        relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
+        let absolutePath = path.join(__dirname, '..', '..', relativePath);
+        fs.writeFile(absolutePath, pictureBuffer, (err) => {
+            if(err){
+                console.log(err);
+                return {status: false, error: err};
+            }
+        });
+        return {status: true, relativePath};
     }
 
 }

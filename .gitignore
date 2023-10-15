@@ -1,3 +1,4 @@
 node_modules/
 .env
 src/uploads/profile-pictures/*.jpg
+!src/uploads/profile-pictures/null-profilepic.jpg
