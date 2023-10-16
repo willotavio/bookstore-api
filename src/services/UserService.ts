@@ -192,6 +192,12 @@ class UserService{
                         return {status: false, message: "Invalid password"};
                     }    
                 }
+                if(userExists.user.profilePicture){
+                    const imageDeleted = await this.deleteProfilePicture(id);
+                    if(!imageDeleted.status){
+                        return {status: false, message: "Error deleting the image"};
+                    }
+                }
                 await connection.del().table('users').where('id', id);
                 return {status: true, message: "Deleted successfully"};
             }
@@ -225,6 +231,18 @@ class UserService{
             }
         });
         return {status: true, relativePath};
+    }
+
+    async deleteProfilePicture(id: string){
+        const relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
+        let absolutePath = path.join(__dirname, '..', '..', relativePath);
+        fs.rm(absolutePath, (err) => {
+            if(err){
+                console.log(err);
+                return {status: false, error: err};
+            }
+        });
+        return {status: true, message: "Image deleted"};
     }
 
 }

@@ -94,6 +94,12 @@ class BookService{
         try{
             const bookExists = await this.getBookById(id);
             if(bookExists.status){
+                if(bookExists.book.coverImage){
+                    const imageDeleted = await this.deleteCoverImage(id);
+                    if(!imageDeleted.status){
+                        return {status: false, error: "Error deleting the image"};
+                    }
+                }
                 await connection.del().table('books').where('id', id);
                 return {status: true, message: "Book deleted"};
             }
@@ -118,6 +124,18 @@ class BookService{
             }
         });
         return {status: true, relativePath};
+    }
+
+    async deleteCoverImage(id: string){
+        const relativePath = path.join('src', 'uploads', 'book-covers', `${id}-coverimage.jpg`);
+        let absolutePath = path.join(__dirname, '..', '..', relativePath);
+        fs.rm(absolutePath, (err) => {
+            if(err){
+                console.log(err);
+                return {status: false, error: err};
+            }
+        });
+        return {status: true, message: "Image deleted"};
     }
 
 }
