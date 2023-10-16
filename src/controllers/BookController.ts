@@ -20,10 +20,13 @@ class BookController{
     }
 
     async addBook(req: Request, res: Response){
-        let { title, synopsis, releaseDate, price, authorId } = req.body;
+        let { title, synopsis, releaseDate, price, authorId, coverImage } = req.body;
         if(title && synopsis && releaseDate && price && authorId){
             parseFloat(price);
-            const book = { title, synopsis, releaseDate, price, authorId };
+            const book: Book = { title, synopsis, releaseDate, price, authorId };
+            if(coverImage.length > 0){
+                book.coverImage = coverImage;
+            }
             const result = await BookService.addBook(book);
             if(result.status){
                 res.status(201).json({message: result.message});
@@ -39,8 +42,8 @@ class BookController{
 
     async updateBook(req: Request, res: Response){
         const id = req.params.bookId;
-        const { title, synopsis, releaseDate, price, authorId } = req.body;
-        if(title || synopsis || releaseDate || price || authorId){
+        const { title, synopsis, releaseDate, price, authorId, coverImage } = req.body;
+        if(title || synopsis || releaseDate || price || authorId || coverImage){
             const book: Book = {};
             if(title){
                 book.title = title;
@@ -56,6 +59,9 @@ class BookController{
             }
             if(authorId){
                 book.authorId = authorId;
+            }
+            if(coverImage && coverImage.length > 0){
+                book.coverImage = coverImage;
             }
             const result = await BookService.updateBook(id, book);
             if(result.status){

@@ -1,12 +1,15 @@
 import connection from '../database/connection';
 import crypto from 'crypto';
+import path from 'path';
+import fs from 'fs';
 
 export interface Book{
     title?: string,
     synopsis?: string,
     releaseDate?: string,
     price?: number,
-    authorId?: string
+    authorId?: string,
+    coverImage?: string
 }
 
 class BookService{
@@ -41,7 +44,17 @@ class BookService{
     async addBook(book: Book){
         try{
             let id = crypto.randomUUID();
-            await connection.insert({...book, id}).table('books');
+            let relativePath = null;
+            if(book.coverImage){
+                const coverSetted = await this.setCoverImage(relativePath, id, book.coverImage);
+                if(coverSetted.relativePath){
+                    relativePath = coverSetted.relativePath;     
+                }
+                else{
+                    return {status: false, message: "Error saving the image"};
+                }
+            }
+            await connection.insert({...book, id, coverImage: relativePath}).table('books');
             return {status: true, message: "Book created"};
         }
         catch(err){
@@ -54,6 +67,16 @@ class BookService{
         try{
             const bookExists = await this.getBookById(id);
             if(bookExists.status){
+                let relativePath = bookExists.book.coverImage;
+                if(book.coverImage){
+                const coverSetted = await this.setCoverImage(relativePath, id, book.coverImage);
+                if(coverSetted.relativePath){
+                    book.coverImage = coverSetted.relativePath;     
+                }
+                else{
+                    return {status: false, message: "Error saving the image"};
+                }
+            }
                 await connection.update(book).table('books').where('id', id);
                 return {status: true, message: "Book updated"};
             }
@@ -82,6 +105,19 @@ class BookService{
             console.log(err);
             return {status: false, error: err, message: "An error occurred"};
         }
+    }
+
+    async setCoverImage(relativePath: string | null, id: string, coverImage: string){
+        const pictureBuffer = Buffer.from(coverImage, 'base64');
+        relativePath = path.join('src', 'uploads', 'book-covers', `${id}-coverimage.jpg`);
+        let absolutePath = path.join(__dirname, '..', '..', relativePath);
+        fs.writeFile(absolutePath, pictureBuffer, (err) => {
+            if(err){
+                console.log(err);
+                return {status: false, error: err};
+            }
+        });
+        return {status: true, relativePath};
     }
 
 }

@@ -1,4 +1,6 @@
 node_modules/
 .env
 src/uploads/profile-pictures/*.jpg
+src/uploads/book-covers/*.jpg
 !src/uploads/profile-pictures/null-profilepic.jpg
+!src/uploads/book-covers/null-coverimage.jpg
