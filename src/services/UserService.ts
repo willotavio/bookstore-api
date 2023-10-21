@@ -14,6 +14,7 @@ interface LoginResult{
 }
 
 export interface User{
+    id?: string;
     name?: string;
     email: string;
     password?: string;
@@ -91,19 +92,17 @@ class UserService{
         }
     }
 
-    async login(email: string, password: string): Promise<LoginResult>{
+    async login(email: string, password: string){
         const userFound = await this.getUserByEmail(email);
         if(userFound.user){
             if(await this.validatePassword(password, userFound.user.password)){
-                return new Promise((resolve, reject) => {
-                    jwt.sign({id: userFound.user.id, email: userFound.user.email, role: userFound.user.role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
-                        if(token){
-                            const { password, ...user } = userFound.user;
-                            resolve({status: true, user, token: token});
-                        }
-                        reject({status: false, error: err, message: "An error occurred during token generation"});
-                    })
-                })
+                const tokenCreated = await this.createToken(userFound.user);
+                if(tokenCreated.status){
+                    return {status: true, user: tokenCreated.user, token: tokenCreated.token};
+                }
+                else{
+                    return {status: false, message: tokenCreated.message};
+                }
             }
             else{
                 return {status: false, message: "Invalid password"};
@@ -112,6 +111,18 @@ class UserService{
         else{
             return {status: false, message: "Invalid email"};
         }
+    }
+
+    async createToken(userInfo: User): Promise<LoginResult>{
+        return new Promise((resolve, reject) => {
+            jwt.sign({id: userInfo.id, email: userInfo.email, role: userInfo.role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+                if(token){
+                    const { password, ...user } = userInfo;
+                    resolve({status: true, user, token: token});
+                }
+                reject({status: false, error: err, message: "An error occurred during token generation"});
+            })
+        })
     }
 
     async updateUser(user: User, id: string){

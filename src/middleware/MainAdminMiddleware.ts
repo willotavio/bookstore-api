@@ -16,16 +16,11 @@ interface TokenData{
 }
 
 export const mainAdminMiddleware = (req: TokenRequest, res: Response, next: NextFunction) => {
-    const authToken = req.headers['authorization'];
+    const authToken = req.cookies.token;
     if(authToken){
-        const token = authToken.split(" ")[1];
-        jwt.verify(token, JWT_SECRET.JWT_SECRET, (err, data) => {
-            if(err){
-                res.status(401).json({message: "Unauthorized"});
-                return;
-            }
-            const userData = data as TokenData;
-            req.token = token;
+        try{
+            const verifiedToken = jwt.verify(authToken, JWT_SECRET.JWT_SECRET);
+            const userData = verifiedToken as TokenData;
             req.loggedUser = {data: userData};
             if(userData.role >= 3){
                 next();
@@ -33,7 +28,12 @@ export const mainAdminMiddleware = (req: TokenRequest, res: Response, next: Next
             else{
                 res.status(401).json({message: "Not a main admin"});
             }
-        });
+        }
+        catch(err){
+            console.log(err);
+            res.status(401).json({message: "Unauthorized"});
+            return;
+        }
     }
     else{
         res.status(401).json({message: "Invalid token"});

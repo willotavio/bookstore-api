@@ -99,7 +99,19 @@ class UserController{
         if(email && password){
             const authenticated = await UserService.login(email, password);
             if(authenticated.status){
-                res.status(200).json({user: authenticated.user, token: authenticated.token});
+                res.cookie('token', authenticated.token, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                    maxAge: 60 * 1000 * 60 * 48
+                });
+                res.cookie('clientToken', true, {
+                    httpOnly: false,
+                    secure: true,
+                    sameSite: 'none',
+                    maxAge: 60 * 1000 * 60 * 48
+                });
+                res.status(200).json({user: authenticated.user});
             }
             else{
                 res.status(401).json({message: authenticated.message});
@@ -108,6 +120,16 @@ class UserController{
         else{
             res.status(400).json({message: "Provide the credentials correctly"});
             return;
+        }
+    }
+
+    async logout(req: Request, res: Response){
+        if(req.cookies.token){
+            res.clearCookie('token');
+            res.status(200).json({message: "Logged out"});
+        }
+        else{
+            res.status(400).json({message: "Not logged in"});
         }
     }
 
