@@ -126,6 +126,7 @@ class UserController{
     async logout(req: Request, res: Response){
         if(req.cookies.token){
             res.clearCookie('token');
+            res.clearCookie('clientToken');
             res.status(200).json({message: "Logged out"});
         }
         else{

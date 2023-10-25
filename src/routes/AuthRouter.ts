@@ -8,5 +8,6 @@ router.post('/login', UserController.login);
 router.post('/register', UserController.registerAccount);
 router.post('/change-password/:userId', userMiddleware, UserController.changePassword);
 router.delete('/:userId', userMiddleware, UserController.deleteProfile);
+router.get('/logout', UserController.logout);
 
 export default router;
