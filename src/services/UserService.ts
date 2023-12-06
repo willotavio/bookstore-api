@@ -83,7 +83,11 @@ class UserService{
             if(user.password){
                 user.password = await this.hashPassword(user.password);
             }
-            await connection.insert({...user, id, profilePicture: relativePath}).table('users');
+            let profilePicture = relativePath;
+            if(relativePath){
+                profilePicture = `${id}-profilepic.jpg`
+            }
+            await connection.insert({...user, id, profilePicture }).table('users');
             return {status: true, message: "User added"};
         }
         catch(err){
@@ -150,7 +154,7 @@ class UserService{
                     if(!user.role){
                         user.role === userExists.user.role;
                     }
-                    await connection.update({...user, profilePicture: relativePath}).table('users').where('id', id);
+                    await connection.update({...user, profilePicture: `${id}-profilepic.jpg`}).table('users').where('id', id);
                     const updatedUser = await this.getUserById(id);
                     return {status: true, user: updatedUser.user};
                 }

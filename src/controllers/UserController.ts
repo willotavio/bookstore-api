@@ -103,15 +103,15 @@ class UserController{
                     httpOnly: true,
                     secure: true,
                     sameSite: 'none',
-                    maxAge: 60 * 1000 * 60 * 48
+                    maxAge: 60 * 1000 * 60 * 24 * 7
                 });
                 res.cookie('clientToken', true, {
                     httpOnly: false,
                     secure: true,
                     sameSite: 'none',
-                    maxAge: 60 * 1000 * 60 * 48
+                    maxAge: 60 * 1000 * 60 * 24 * 7
                 });
-                res.status(200).json({user: authenticated.user});
+                res.status(200).json(authenticated.user);
             }
             else{
                 res.status(401).json({message: authenticated.message});
@@ -137,7 +137,7 @@ class UserController{
     async updateUser(req: Request, res: Response){
         const id = req.params.userId;
         const { name, email, password, role, profilePicture } = req.body;
-        if(name || email || password || role > 0){
+        if(name || email || password || role > 0 || profilePicture){
             const user: User = { name, email, password, role};
             if(profilePicture){
                 user.profilePicture = profilePicture;
@@ -165,7 +165,7 @@ class UserController{
     async updateProfile(req: Request, res: Response){
         const id = req.params.userId;
         const { name, email, password, profilePicture } = req.body;
-        if(name || email || password){
+        if(name || email || password || profilePicture){
             const user: User = { name, email, password};
             if(profilePicture){
                 user.profilePicture = profilePicture;
