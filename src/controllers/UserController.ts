@@ -185,7 +185,7 @@ class UserController{
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct informations"});
+            res.status(400).json({message: "Provide the correct information"});
             return;
         }   
     }
@@ -257,6 +257,32 @@ class UserController{
             res.status(400).json({message: "Provide the password correctly"});
             return;
         }
+    }
+
+    async sendVerificationEmail(req: Request, res: Response){
+        const { email, userId } = req.body;
+        if(!email || !userId){
+            res.status(400).json({ message: "Provide the correct information" });
+        }
+        const emailSent = await UserService.sendVerificationEmail(email, userId);
+        if(!emailSent.status){
+            res.status(500).json({ message: emailSent.message });
+            return;
+        }
+        res.status(200).json({ message: emailSent.message });
+    }
+
+    async verifyEmail(req: Request, res: Response){
+        const token = req.query.token + "";
+        const result = await UserService.verifyEmail(token);
+        if(result.error){
+            res.status(500).json({ message: result.message, error: result.error });
+        }
+        if(!result.status){
+            res.status(400).json({ message: result.message });
+            return;
+        }
+        res.status(200).json({ message: result.message });
     }
 
 }

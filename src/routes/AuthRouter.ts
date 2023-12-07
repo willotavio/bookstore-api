@@ -9,5 +9,7 @@ router.post('/register', UserController.registerAccount);
 router.post('/change-password/:userId', userMiddleware, UserController.changePassword);
 router.delete('/:userId', userMiddleware, UserController.deleteProfile);
 router.get('/logout', UserController.logout);
+router.get('/verify', UserController.verifyEmail);
+router.get('/send-verification', UserController.sendVerificationEmail);
 
 export default router;

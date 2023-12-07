@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import JWT_SECRET from '../config';
 import fs from 'fs';
 import path from 'path';
+import nodemailer, { Transporter } from 'nodemailer';
 
 interface LoginResult{
     status: boolean,
@@ -19,10 +20,30 @@ export interface User{
     email: string;
     password?: string;
     role?: number;
-    profilePicture?: string
+    profilePicture?: string;
+    isVerified?: number;
+}
+
+interface VerificationCode{
+    id: string;
+    verificationCode: string;
+    expirationDate: Date;
+    userId: string;
 }
 
 class UserService{
+    transporter: Transporter;
+    constructor(){
+        this.transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: "willyto23456@gmail.com",
+                pass: "aqtrhqrcsijtdelq"
+            }
+        })
+    }
 
     async getUsers(){
         try{
@@ -87,7 +108,11 @@ class UserService{
             if(relativePath){
                 profilePicture = `${id}-profilepic.jpg`
             }
-            await connection.insert({...user, id, profilePicture }).table('users');
+            await connection.insert({...user, id, profilePicture, isVerified: 0 }).table('users');
+            const emailSent = await this.sendVerificationEmail(user.email, id);
+            if(!emailSent.status){
+                return { status: false, message: emailSent.message, error: emailSent.error };
+            }
             return {status: true, message: "User added"};
         }
         catch(err){
@@ -258,6 +283,83 @@ class UserService{
             }
         });
         return {status: true, message: "Image deleted"};
+    }
+
+    async createVerificationCode(userId: string){
+        try{
+            const id = crypto.randomUUID();
+            const verificationCode = crypto.randomBytes(32).toString("hex");
+            const date = new Date();
+            const expirationTime = new Date(date.getTime() + 10 * 60 * 1000);
+            const formattedExpirationTime = expirationTime.toISOString().slice(0, 19).replace('T', ' ');
+            await connection.insert({ id, verificationCode, expirationDate: formattedExpirationTime, userId }).table("verificationCodes");
+            return { status: true, verificationCode, message: "Verification code sent" };
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, error };
+        }
+    }
+
+    async getVerificationCode(code: string){
+        try{
+            const verificationCode: VerificationCode[] = await connection.select().table("verificationCodes").where("verificationCode", code);
+            if(verificationCode.length <= 0){
+                return { status: false, message: "Invalid code" };
+            }
+            const expirationDate = new Date(verificationCode[0].expirationDate.getTime() - 3 * 60 * 60 * 1000);
+            if(expirationDate < new Date()){
+                return { status: false, message: "Verification code has expired" }
+            }
+            return { status: true, verificationCode: verificationCode[0], message: "Verification code is valid" }
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, message: "Error verifying code", error };
+        }
+    }
+
+    async sendVerificationEmail(email: string, userId: string){
+        try{
+            await connection.delete().table("verificationCodes").where("userId", userId);
+            const verificationCode = await this.createVerificationCode(userId);
+            if(!verificationCode.status){
+                return { status: false, message: "Error creating code", error: verificationCode.error };
+            }
+            const verificationLink = `http://localhost:8080/auth/verify?token=${verificationCode.verificationCode}`;
+            await this.transporter.sendMail({
+                from: "Bookstore",
+                to: email,
+                subject: "Bookstore - Email Verification",
+                text: "Verify your account",
+                html: `<a style="background-color: #161c5c;
+                                color: white; padding: 1rem;
+                                text-decoration: none;
+                                padding-bottom: 0.5rem;
+                                border-radius: 0.2rem"
+                            href="${verificationLink}">
+                            Verify
+                        </a>`
+            });
+            return { status: true, message: "Email sent" };
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, message: "Error sending email", error };
+        }
+    }
+
+    async verifyEmail(code: string){
+        const isValid = await this.getVerificationCode(code);
+        if(!isValid.status){
+            return { status: false, message: isValid.message };
+        }
+        if(isValid.error){
+            return { status: false, error: isValid.error, message: isValid.message };
+        }
+        await connection.update({ isVerified: 1 }).table("users").where("id", isValid.verificationCode?.userId);
+        await connection.delete().table("verificationCodes").where("verificationCode", code);
+        return { status: true, message: isValid.message };
     }
 
 }
