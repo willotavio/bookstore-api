@@ -7,8 +7,8 @@ import { userMiddleware } from '../middleware/UserMiddleware';
 router.get('/', mainAdminMiddleware, UserController.getUsers);
 router.get('/:userId', mainAdminMiddleware, UserController.getUserById);
 router.post('/', mainAdminMiddleware, UserController.addUser);
-router.put('/:userId', mainAdminMiddleware, UserController.updateUser);
-router.put('/update/:userId', userMiddleware, UserController.updateProfile);
+router.patch('/:userId', mainAdminMiddleware, UserController.updateUser);
+router.patch('/update/:userId', userMiddleware, UserController.updateProfile);
 router.delete('/:userId', mainAdminMiddleware, UserController.deleteUser);
 
 export default router;

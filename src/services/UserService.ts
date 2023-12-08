@@ -39,8 +39,8 @@ class UserService{
             port: 465,
             secure: true,
             auth: {
-                user: "willyto23456@gmail.com",
-                pass: "aqtrhqrcsijtdelq"
+                user: process.env.TRANSPORTER_USER,
+                pass: process.env.TRANSPORTER_SECRET
             }
         })
     }
