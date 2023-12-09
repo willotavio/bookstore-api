@@ -12,7 +12,8 @@ export interface TokenRequest extends Request{
 interface TokenData{
     id: string,
     email: string,
-    role: number
+    role: number,
+    isVerified: number
 }
 
 export const mainAdminMiddleware = (req: TokenRequest, res: Response, next: NextFunction) => {

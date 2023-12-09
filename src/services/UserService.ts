@@ -144,7 +144,7 @@ class UserService{
 
     async createToken(userInfo: User): Promise<LoginResult>{
         return new Promise((resolve, reject) => {
-            jwt.sign({id: userInfo.id, email: userInfo.email, role: userInfo.role}, JWT_SECRET.JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+            jwt.sign({ id: userInfo.id, email: userInfo.email, role: userInfo.role, isVerified: userInfo.isVerified }, JWT_SECRET.JWT_SECRET, { expiresIn: '48h' }, (err, token) => {
                 if(token){
                     const { password, ...user } = userInfo;
                     resolve({status: true, user, token: token});

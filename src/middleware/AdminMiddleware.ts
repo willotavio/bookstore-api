@@ -12,7 +12,8 @@ export interface TokenRequest extends Request{
 interface TokenData{
     id: string,
     email: string,
-    role: number
+    role: number,
+    isVerified: number
 }
 
 export const adminMiddleware = (req: TokenRequest, res: Response, next: NextFunction) => {
@@ -22,6 +23,10 @@ export const adminMiddleware = (req: TokenRequest, res: Response, next: NextFunc
             const verifiedToken = jwt.verify(authToken, JWT_SECRET.JWT_SECRET);
             const userData = verifiedToken as TokenData;
             req.loggedUser = {data: userData};
+            if(userData.isVerified === 0){
+                res.status(401).json({ message: "Email not verified" });
+                return;
+            }
             if(userData.role >= 2){
                 next();
             }

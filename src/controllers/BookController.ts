@@ -24,7 +24,7 @@ class BookController{
         if(title && synopsis && releaseDate && price && authorId){
             parseFloat(price);
             const book: Book = { title, synopsis, releaseDate, price, authorId };
-            if(coverImage.length > 0){
+            if(coverImage?.length > 0){
                 book.coverImage = coverImage;
             }
             const result = await BookService.addBook(book);
