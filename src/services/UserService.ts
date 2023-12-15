@@ -113,7 +113,8 @@ class UserService{
             if(!emailSent.status){
                 return { status: false, message: emailSent.message, error: emailSent.error };
             }
-            return {status: true, message: "User added"};
+            const { password, ...userResult } = user;
+            return { status: true, message: "User added", user: { ...userResult, id } };
         }
         catch(err){
             console.log(err);
@@ -179,7 +180,7 @@ class UserService{
                     if(!user.role){
                         user.role === userExists.user.role;
                     }
-                    await connection.update({...user, profilePicture: `${id}-profilepic.jpg`}).table('users').where('id', id);
+                    await connection.update({...user, profilePicture: !user.profilePicture && !relativePath ? null : `${id}-profilepic.jpg`}).table('users').where('id', id);
                     const updatedUser = await this.getUserById(id);
                     return {status: true, user: updatedUser.user};
                 }
@@ -332,8 +333,10 @@ class UserService{
                 to: email,
                 subject: "Bookstore - Email Verification",
                 text: "Verify your account",
-                html: `<a style="background-color: #161c5c;
-                                color: white; padding: 1rem;
+                html: `<h1>Click to verify</h1>
+                        <a style="background-color: #161c5c;
+                                color: white; 
+                                padding: 1rem;
                                 text-decoration: none;
                                 padding-bottom: 0.5rem;
                                 border-radius: 0.2rem"

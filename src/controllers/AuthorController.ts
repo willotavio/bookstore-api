@@ -29,22 +29,22 @@ class AuthorController{
             try{
                 const result = await AuthorService.addAuthor(author);
                 if(result.status){
-                    res.status(201).json({message: result.message});
+                    res.status(201).json({ message: result.message, author: result.author });
                     return;    
                 }
                 else{
-                    res.status(500).json({message: result.message});
+                    res.status(500).json({ message: result.message });
                     return;
                 }
             }
             catch(err){
                 console.log(err);
-                res.status(500).json({message: "An error occurred"});
+                res.status(500).json({ message: "An error occurred" });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct informations"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }
     }

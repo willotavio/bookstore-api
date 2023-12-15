@@ -39,12 +39,12 @@ class AuthorService{
     async addAuthor(author: Author){
         try{
             let id = crypto.randomUUID();
-            await connection.insert({...author, id}).table('authors');
-            return {status: true, message: "Author created"};
+            await connection.insert({ ...author, id }).table('authors');
+            return { status: true, message: "Author created", author: { ...author, id } };
         }
         catch(err){
             console.log(err);
-            return {status: false, message: "An error occurred"};
+            return { status: false, message: "An error occurred" };
         }
     }
 

@@ -51,15 +51,15 @@ class BookService{
                     relativePath = coverSetted.relativePath;     
                 }
                 else{
-                    return {status: false, message: "Error saving the image"};
+                    return { status: false, message: "Error saving the image" };
                 }
             }
             await connection.insert({...book, id, coverImage: relativePath}).table('books');
-            return {status: true, message: "Book created"};
+            return { status: true, message: "Book created", book: { ...book, id } };
         }
         catch(err){
             console.log(err);
-            return {status: false, message: "This author does not exists"};
+            return { status: false, message: "This author does not exists" };
         }
     }
 

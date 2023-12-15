@@ -23,10 +23,6 @@ export const userMiddleware = (req: TokenRequest, res: Response, next: NextFunct
             const verifiedToken = jwt.verify(authToken, JWT_SECRET.JWT_SECRET);
             const userData = verifiedToken as TokenData;
             req.loggedUser = {data: userData};
-            if(userData.isVerified === 0){
-                res.status(401).json({ message: "Email not verified" });
-                return;
-            }
             if(userData.id === req.params.userId){
                 next();
             }

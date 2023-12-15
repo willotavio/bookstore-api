@@ -29,15 +29,15 @@ class BookController{
             }
             const result = await BookService.addBook(book);
             if(result.status){
-                res.status(201).json({message: result.message});
+                res.status(201).json( { message: result.message, book: result.book });
                 return;
             }
             else{
-                res.status(500).json({message: result.message});
+                res.status(500).json({ message: result.message });
                 return;
             }
         }
-        res.status(400).json({message: "Provide the correct information"});
+        res.status(400).json({ message: "Provide the correct information" });
     }
 
     async updateBook(req: Request, res: Response){

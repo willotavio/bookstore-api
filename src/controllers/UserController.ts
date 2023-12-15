@@ -30,7 +30,7 @@ class UserController{
         const { name, email, password, confirmPassword, role, profilePicture } = req.body;
         if(name && email && password && confirmPassword && role > 0){
             if(password !== confirmPassword){
-                res.status(400).json({message: "Passwords doesn't match"});
+                res.status(400).json({ message: "Passwords don't match" });
                 return;
             }
             const emailExists = await UserService.getUserByEmail(email);
@@ -41,21 +41,21 @@ class UserController{
                 }
                 const result = await UserService.addUser(user);
                 if(result.status){
-                    res.status(201).json({message: result.message});
+                    res.status(201).json({ message: result.message, user: result.user });
                     return;
                 }
                 else{
-                    res.status(500).json({message: result.message});
+                    res.status(500).json({ message: result.message });
                     return;
                 }
             }
             else{
-                res.status(400).json({message: "Email already in use"});
+                res.status(400).json({ message: "Email already in use" });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct informations"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }
     }
