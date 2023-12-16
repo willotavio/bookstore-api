@@ -3,9 +3,10 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import JWT_SECRET from '../config';
-import fs from 'fs';
-import path from 'path';
 import nodemailer, { Transporter } from 'nodemailer';
+import { ref, getDownloadURL, deleteObject, uploadString } from "firebase/storage";
+import { storage } from '../config/firebase';
+import { v4 } from 'uuid';
 
 interface LoginResult{
     status: boolean,
@@ -91,30 +92,21 @@ class UserService{
     async addUser(user: User){
         try{
             const id = crypto.randomUUID();
-            let relativePath = null;
-            if(user.profilePicture){
-                const pictureSetted = await this.setProfilePicture(relativePath, id, user.profilePicture);
-                if(pictureSetted.status){
-                    relativePath = pictureSetted.relativePath;
-                }
-                else{
-                    return {status: false, message: "Error saving the image"};
-                }
+            let profilePictureSetted;
+            if(user.name && user.profilePicture){
+                profilePictureSetted = await this.setProfilePicture(user.name, user.profilePicture);
             }
             if(user.password){
                 user.password = await this.hashPassword(user.password);
             }
-            let profilePicture = relativePath;
-            if(relativePath){
-                profilePicture = `${id}-profilepic.jpg`
-            }
-            await connection.insert({...user, id, profilePicture, isVerified: 0 }).table('users');
+            await connection.insert({...user, id, profilePicture: profilePictureSetted?.status ? profilePictureSetted.profilePictureUrl : "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/profile-pictures%2Fnull.jpg?alt=media&token=0a7059e9-f572-4043-b5f9-7478e52f3234", isVerified: 0 }).table('users');
             const emailSent = await this.sendVerificationEmail(user.email, id);
             if(!emailSent.status){
                 return { status: false, message: emailSent.message, error: emailSent.error };
             }
             const { password, ...userResult } = user;
-            return { status: true, message: "User added", user: { ...userResult, id } };
+            userResult.profilePicture = profilePictureSetted?.profilePictureUrl;
+            return { status: true, message: "User added", user: { ...userResult, id, profilePicture: profilePictureSetted?.status ? profilePictureSetted.profilePictureUrl : "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/profile-pictures%2Fnull.jpg?alt=media&token=0a7059e9-f572-4043-b5f9-7478e52f3234" } };
         }
         catch(err){
             console.log(err);
@@ -167,34 +159,34 @@ class UserService{
                     if(user.password){
                         user.password = await this.hashPassword(user.password);
                     }
-                    let relativePath = userExists.user.profilePicture;
+                    let profilePictureSetted;
                     if(user.profilePicture){
-                        const pictureSetted = await this.setProfilePicture(relativePath, id, user.profilePicture);
-                        if(pictureSetted.status){
-                            relativePath = pictureSetted.relativePath;
-                        }
-                        else{
-                            return {status: false, message: "Error saving the image"};
+                        profilePictureSetted = await this.setProfilePicture(userExists.user.name, user.profilePicture);
+                        if(userExists.user.profilePicture !== "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/profile-pictures%2Fnull.jpg?alt=media&token=0a7059e9-f572-4043-b5f9-7478e52f3234"){
+                            const imageDeleted = await this.deleteProfilePicture(userExists.user.profilePicture);
+                            if(!imageDeleted.status){
+                                return { status: false, message: "Error deleting the image" };
+                            }
                         }
                     }
                     if(!user.role){
-                        user.role === userExists.user.role;
+                        user.role = userExists.user.role;
                     }
-                    await connection.update({...user, profilePicture: !user.profilePicture && !relativePath ? null : `${id}-profilepic.jpg`}).table('users').where('id', id);
+                    await connection.update({ ...user, profilePicture: profilePictureSetted?.profilePictureUrl }).table('users').where('id', id);
                     const updatedUser = await this.getUserById(id);
                     return {status: true, user: updatedUser.user};
                 }
                 catch(err){
                     console.log(err);
-                    return {status: false, error: err, message: "An error occurred"};
+                    return { status: false, error: err, message: "An error occurred" };
                 }
             }
             else{
-                return {status: false, message: "Email already in use"};
+                return { status: false, message: "Email already in use" };
             }
         }
         else{
-            return {status: false, message: "User not found"};
+            return { status: false, message: "User not found" };
         }
     }
 
@@ -230,21 +222,21 @@ class UserService{
             try{
                 if(password){
                     if(!(await this.validatePassword(password, userExists.user.password))){
-                        return {status: false, message: "Invalid password"};
+                        return { status: false, message: "Invalid password" };
                     }    
                 }
-                if(userExists.user.profilePicture){
-                    const imageDeleted = await this.deleteProfilePicture(id);
+                if(userExists.user.profilePicture !== "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/profile-pictures%2Fnull.jpg?alt=media&token=0a7059e9-f572-4043-b5f9-7478e52f3234"){
+                    const imageDeleted = await this.deleteProfilePicture(userExists.user.profilePicture);
                     if(!imageDeleted.status){
-                        return {status: false, message: "Error deleting the image"};
+                        return { status: false, message: "Error deleting the image" };
                     }
                 }
                 await connection.del().table('users').where('id', id);
-                return {status: true, message: "Deleted successfully"};
+                return { status: true, message: "Deleted successfully" };
             }
             catch(err){
                 console.log(err);
-                return {status: false, error: err, message: "An error occurred"};
+                return { status: false, error: err, message: "An error occurred" };
             }
         }
         else{
@@ -261,29 +253,32 @@ class UserService{
         return await bcrypt.hash(password, salt);
     }
 
-    async setProfilePicture(relativePath: string | null, id: string, profilePicture: string){
-        const pictureBuffer = Buffer.from(profilePicture, 'base64');
-        relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
-        let absolutePath = path.join(__dirname, '..', '..', relativePath);
-        fs.writeFile(absolutePath, pictureBuffer, (err) => {
-            if(err){
-                console.log(err);
-                return {status: false, error: err};
-            }
-        });
-        return {status: true, relativePath};
+    async setProfilePicture(username: string, profilePicture: string){
+        try{
+            const profilePicturePath = `profile-pictures/${username}-${v4()}`;
+            const storageRef = ref(storage, profilePicturePath);
+            await uploadString(storageRef, profilePicture, 'data_url');
+            const profilePictureUrl = await getDownloadURL(storageRef);
+            return { status: true, message: "Profile picture setted", profilePictureUrl, profilePicturePath };
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, message: error };
+        }
     }
 
-    async deleteProfilePicture(id: string){
-        const relativePath = path.join('src', 'uploads', 'profile-pictures', `${id}-profilepic.jpg`);
-        let absolutePath = path.join(__dirname, '..', '..', relativePath);
-        fs.rm(absolutePath, (err) => {
-            if(err){
-                console.log(err);
-                return {status: false, error: err};
-            }
-        });
-        return {status: true, message: "Image deleted"};
+    async deleteProfilePicture(profilePictureUrl: string){
+        try{
+            const url = new URL(profilePictureUrl);
+            const path = decodeURIComponent(url.pathname).split("o/")[1];
+            const deleteRef = ref(storage, path);
+            await deleteObject(deleteRef);
+            return { status: true, message: "Profile picture deleted" }
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, error };
+        }
     }
 
     async createVerificationCode(userId: string){
