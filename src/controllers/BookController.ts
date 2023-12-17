@@ -21,8 +21,7 @@ class BookController{
 
     async addBook(req: Request, res: Response){
         let { title, synopsis, releaseDate, price, authorId, coverImage } = req.body;
-        if(title && synopsis && releaseDate && price && authorId){
-            parseFloat(price);
+        if(title && synopsis && synopsis.length < 255 && releaseDate && price && authorId){
             const book: Book = { title, synopsis, releaseDate, price, authorId };
             if(coverImage?.length > 0){
                 book.coverImage = coverImage;

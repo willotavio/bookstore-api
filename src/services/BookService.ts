@@ -1,7 +1,8 @@
 import connection from '../database/connection';
 import crypto from 'crypto';
-import path from 'path';
-import fs from 'fs';
+import { deleteObject, getDownloadURL, ref, uploadString } from 'firebase/storage';
+import { storage } from '../config/firebase';
+import { v4 } from 'uuid';
 
 export interface Book{
     title?: string,
@@ -44,18 +45,15 @@ class BookService{
     async addBook(book: Book){
         try{
             let id = crypto.randomUUID();
-            let relativePath = null;
-            if(book.coverImage){
-                const coverSetted = await this.setCoverImage(relativePath, id, book.coverImage);
-                if(coverSetted.relativePath){
-                    relativePath = coverSetted.relativePath;     
-                }
-                else{
+            let coverImageSetted;
+            if(book.title && book.coverImage){
+                coverImageSetted = await this.setCoverImage(book.title, book.coverImage);
+                if(!coverImageSetted.status){
                     return { status: false, message: "Error saving the image" };
                 }
             }
-            await connection.insert({...book, id, coverImage: relativePath}).table('books');
-            return { status: true, message: "Book created", book: { ...book, id } };
+            await connection.insert({ ...book, id, coverImage: coverImageSetted?.status ? coverImageSetted.coverImageUrl : "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/book-covers%2Fnull.jpg?alt=media&token=575e25b9-fc67-4dd7-ae6f-82aa609d64a7" }).table('books');
+            return { status: true, message: "Book created", book: { ...book, id, coverImage: coverImageSetted?.status ? coverImageSetted.coverImageUrl : "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/book-covers%2Fnull.jpg?alt=media&token=575e25b9-fc67-4dd7-ae6f-82aa609d64a7" } };
         }
         catch(err){
             console.log(err);
@@ -67,21 +65,25 @@ class BookService{
         try{
             const bookExists = await this.getBookById(id);
             if(bookExists.status){
-                let relativePath = bookExists.book.coverImage;
+                let coverImageSetted;
                 if(book.coverImage){
-                const coverSetted = await this.setCoverImage(relativePath, id, book.coverImage);
-                if(coverSetted.relativePath){
-                    book.coverImage = coverSetted.relativePath;     
+                    coverImageSetted = await this.setCoverImage(bookExists.book.title, book.coverImage);
+                    if(!coverImageSetted.status){
+                        return { status: false, message: "Error saving the image" };
+                    }
+                    book.coverImage = coverImageSetted.coverImageUrl;
+                    if(bookExists.book.coverImage !== "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/book-covers%2Fnull.jpg?alt=media&token=575e25b9-fc67-4dd7-ae6f-82aa609d64a7"){
+                        const imageDeleted = await this.deleteCoverImage(bookExists.book.coverImage);
+                        if(!imageDeleted.status){
+                            return { status: false, error: "Error deleting the image" };
+                        }
+                    }
                 }
-                else{
-                    return {status: false, message: "Error saving the image"};
-                }
-            }
                 await connection.update(book).table('books').where('id', id);
-                return {status: true, message: "Book updated"};
+                return { status: true, message: "Book updated" };
             }
             else{
-                return {status: false, message: bookExists.message};
+                return { status: false, message: bookExists.message };
             }
         }
         catch(err){
@@ -94,17 +96,17 @@ class BookService{
         try{
             const bookExists = await this.getBookById(id);
             if(bookExists.status){
-                if(bookExists.book.coverImage){
-                    const imageDeleted = await this.deleteCoverImage(id);
+                if(bookExists.book.coverImage !== "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/book-covers%2Fnull.jpg?alt=media&token=575e25b9-fc67-4dd7-ae6f-82aa609d64a7"){
+                    const imageDeleted = await this.deleteCoverImage(bookExists.book.coverImage);
                     if(!imageDeleted.status){
-                        return {status: false, error: "Error deleting the image"};
+                        return { status: false, error: "Error deleting the image" };
                     }
                 }
                 await connection.del().table('books').where('id', id);
-                return {status: true, message: "Book deleted"};
+                return { status: true, message: "Book deleted" };
             }
             else{
-                return {status: false, message: bookExists.message};
+                return { status: false, message: bookExists.message };
             }
         }
         catch(err){
@@ -113,29 +115,32 @@ class BookService{
         }
     }
 
-    async setCoverImage(relativePath: string | null, id: string, coverImage: string){
-        const pictureBuffer = Buffer.from(coverImage, 'base64');
-        relativePath = path.join('src', 'uploads', 'book-covers', `${id}-coverimage.jpg`);
-        let absolutePath = path.join(__dirname, '..', '..', relativePath);
-        fs.writeFile(absolutePath, pictureBuffer, (err) => {
-            if(err){
-                console.log(err);
-                return {status: false, error: err};
-            }
-        });
-        return {status: true, relativePath};
+    async setCoverImage(title: string | null, coverImage: string){
+        try{
+            const coverImagePath = `book-covers/${title}-${v4()}`;
+            const storageRef = ref(storage, coverImagePath);
+            await uploadString(storageRef, coverImage, 'data_url');
+            const coverImageUrl = await getDownloadURL(storageRef);
+            return { status: true, message: "Book cover setted", coverImageUrl };
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, message: error };
+        }
     }
 
-    async deleteCoverImage(id: string){
-        const relativePath = path.join('src', 'uploads', 'book-covers', `${id}-coverimage.jpg`);
-        let absolutePath = path.join(__dirname, '..', '..', relativePath);
-        fs.rm(absolutePath, (err) => {
-            if(err){
-                console.log(err);
-                return {status: false, error: err};
-            }
-        });
-        return {status: true, message: "Image deleted"};
+    async deleteCoverImage(coverImageUrl: string){
+        try{
+            const url = new URL(coverImageUrl);
+            const path = decodeURIComponent(url.pathname).split("o/")[1];
+            const deleteRef = ref(storage, path);
+            await deleteObject(deleteRef);
+            return { status: true, message: "Book cover deleted" };
+        }
+        catch(error){
+            console.log(error);
+            return { status: false, message: error };
+        }
     }
 
 }
