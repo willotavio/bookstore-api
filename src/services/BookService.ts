@@ -80,7 +80,8 @@ class BookService{
                     }
                 }
                 await connection.update(book).table('books').where('id', id);
-                return { status: true, message: "Book updated" };
+                const updatedBook = await this.getBookById(id);
+                return { status: true, message: "Book updated", book: updatedBook.book };
             }
             else{
                 return { status: false, message: bookExists.message };

@@ -5,7 +5,7 @@ import { mainAdminMiddleware } from '../middleware/MainAdminMiddleware';
 import { userMiddleware } from '../middleware/UserMiddleware';
 
 router.get('/', mainAdminMiddleware, UserController.getUsers);
-router.get('/:userId', mainAdminMiddleware, UserController.getUserById);
+router.get('/:userId', userMiddleware, UserController.getUserById);
 router.post('/', mainAdminMiddleware, UserController.addUser);
 router.patch('/:userId', mainAdminMiddleware, UserController.updateUser);
 router.patch('/update/:userId', userMiddleware, UserController.updateProfile);

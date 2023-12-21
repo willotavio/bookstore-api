@@ -53,15 +53,16 @@ class AuthorService{
             const authorExists = await this.getAuthorById(id);
             if(authorExists.status){
                 await connection.update(author).table('authors').where('id', id);
-                return {status: true, message: "Author updated"};
+                const updatedAuthor = await this.getAuthorById(id);
+                return { status: true, message: "Author updated", author: updatedAuthor.author };
             }
             else{
-                return {status: false, message: "Author not found"};
+                return { status: false, message: "Author not found" };
             }
         }
         catch(err){
             console.log(err);
-            return {status: false, error: err, message: "An error occurred"};
+            return { status: false, error: err, message: "An error occurred" };
         }
     }
 

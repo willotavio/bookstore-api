@@ -13,15 +13,15 @@ class UserController{
         const id = req.params.userId;
         const result = await UserService.getUserById(id);
         if(result.status){
-            res.status(200).json({user: result.user});
+            res.status(200).json({ user: result.user });
             return;
         }
         else if(result.error){
-            res.status(500).json({message: result.message});
+            res.status(500).json({ message: result.message });
             return;
         }
         else{
-            res.status(404).json({message: result.message});
+            res.status(404).json({ message: result.message });
             return;
         }
     }
@@ -64,7 +64,7 @@ class UserController{
         const { name, email, password, confirmPassword, profilePicture } = req.body;
         if(name && email && password && confirmPassword){
             if(password !== confirmPassword){
-                res.status(400).json({message: "Passwords doesn't match"});
+                res.status(400).json({ message: "Passwords don't match" });
                 return;
             }
             const emailExists = await UserService.getUserByEmail(email);
@@ -75,21 +75,21 @@ class UserController{
                 }
                 const result = await UserService.addUser(user);
                 if(result.status){
-                    res.status(201).json({message: result.message});
+                    res.status(201).json({ message: result.message });
                     return;
                 }
                 else{
-                    res.status(500).json({message: result.message});
+                    res.status(500).json({ message: result.message });
                     return;
                 }
             }
             else{
-                res.status(400).json({message: "Email already in use"});
+                res.status(400).json({ message: "Email already in use" });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct informations"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }
     }
@@ -144,20 +144,20 @@ class UserController{
             }
             const result = await UserService.updateUser(user, id);
             if(result.status){
-                res.status(200).json({user: result.user});
+                res.status(200).json({ message: result.message, user: result.user });
                 return;
             }
             else if(result.error){
-                res.status(500).json({error: result.error});
+                res.status(500).json({ error: result.error, message: "Failed to update user" });
                 return;
             }
             else{
-                res.status(404).json({message: result.message});
+                res.status(404).json({ message: result.message });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct informations"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }   
     }
@@ -172,20 +172,20 @@ class UserController{
             }
             const result = await UserService.updateUser(user, id);
             if(result.status){
-                res.status(200).json({user: result.user});
+                res.status(200).json({ message: result.message, user: result.user });
                 return;
             }
             else if(result.error){
-                res.status(500).json({errors: result.error});
+                res.status(500).json({ error: result.error, message: "Failed to update user" });
                 return;
             }
             else{
-                res.status(404).json({message: result.message});
+                res.status(404).json({ message: result.message });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct information"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }   
     }
@@ -194,26 +194,26 @@ class UserController{
         const id = req.params.userId;
         const { newPassword, confirmNewPassword, currentPassword } = req.body;
         if(newPassword !== confirmNewPassword){
-            res.status(400).json({message: "Passwords doesn't match"});
+            res.status(400).json({ message: "Passwords don't match" });
             return;
         }
         if(newPassword && currentPassword){
             const result = await UserService.changePassword(id, newPassword, currentPassword);
             if(result.status){
-                res.status(200).json({message: result.message});
+                res.status(200).json({ message: result.message });
                 return;
             }
             else if(result.error){
-                res.status(500).json({message: result.message});
+                res.status(500).json({ message: result.message });
                 return;
             }
             else{
-                res.status(401).json({message: result.message});
+                res.status(401).json({ message: result.message });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the passwords correctly"});
+            res.status(400).json({ message: "Provide the passwords correctly" });
             return;
         }
     }
@@ -222,15 +222,15 @@ class UserController{
         const id = req.params.userId;
         const result = await UserService.deleteUser(id);
         if(result.status){
-            res.status(200).json({message: "User deleted"});
+            res.status(200).json({ message: "User deleted" });
             return;
         }
         else if(result.error){
-            res.status(500).json({error: result.error});
+            res.status(500).json({ error: result.error, message: result.message });
             return;
         }
         else{
-            res.status(404).json({message: result.message});
+            res.status(404).json({ message: result.message });
             return;
         }
     }
@@ -240,21 +240,21 @@ class UserController{
         const { password, confirmPassword } = req.body;
         if(password && confirmPassword){
             if(password !== confirmPassword){
-                res.status(400).json({message: "Passwords doesn't match"});
+                res.status(400).json({ message: "Passwords don't match" });
                 return;
             }
             const result = await UserService.deleteUser(id, password);
             if(result.status){
-                res.status(200).json({message: result.message});
+                res.status(200).json({ message: result.message });
                 return;
             }
             else{
-                res.status(401).json({message: result.message});
+                res.status(401).json({ message: result.message });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the password correctly"});
+            res.status(400).json( {message: "Provide the password correctly" });
             return;
         }
     }

@@ -25,7 +25,7 @@ class AuthorController{
     async addAuthor(req: Request, res: Response){
         const { name, biography, birthDate } = req.body;
         if(name && biography && birthDate){
-            const author = {name, biography, birthDate};
+            const author = { name, biography, birthDate };
             try{
                 const result = await AuthorService.addAuthor(author);
                 if(result.status){
@@ -65,20 +65,20 @@ class AuthorController{
             }
             const result = await AuthorService.updateAuthor(id, author);
             if(result.status){
-                res.status(200).json({message: result.message});
+                res.status(200).json({ message: result.message, author: result.author });
                 return;
             }
             else if(result.error){
-                res.status(500).json({error: result.error});
+                res.status(500).json({ error: result.error });
                 return
             }
             else{
-                res.status(404).json({message: result.message});
+                res.status(404).json({ message: result.message });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct informations"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }
     }

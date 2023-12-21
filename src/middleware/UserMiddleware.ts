@@ -23,7 +23,7 @@ export const userMiddleware = (req: TokenRequest, res: Response, next: NextFunct
             const verifiedToken = jwt.verify(authToken, JWT_SECRET.JWT_SECRET);
             const userData = verifiedToken as TokenData;
             req.loggedUser = {data: userData};
-            if(userData.id === req.params.userId){
+            if(userData.id === req.params.userId || userData.role >= 3){
                 next();
             }
             else{

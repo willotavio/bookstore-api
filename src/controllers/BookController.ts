@@ -64,16 +64,16 @@ class BookController{
             }
             const result = await BookService.updateBook(id, book);
             if(result.status){
-                res.status(200).json({message: result.message});
+                res.status(200).json({ message: result.message, book: result.book });
                 return;
             }
             else{
-                res.status(404).json({message: result.message});
+                res.status(404).json({ message: result.message });
                 return;
             }
         }
         else{
-            res.status(400).json({message: "Provide the correct information"});
+            res.status(400).json({ message: "Provide the correct information" });
             return;
         }
     }

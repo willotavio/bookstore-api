@@ -48,7 +48,11 @@ class UserService{
 
     async getUsers(){
         try{
-            const users = await connection.select().table('users');
+            let users: User[] = await connection.select().table('users');
+            users = users.map((user) => {
+                const { password, ...filteredUser } = user
+                return filteredUser;
+            });
             return {status: true, users};
         }
         catch(err){
@@ -59,17 +63,19 @@ class UserService{
 
     async getUserById(id: string){
         try{
-            const user = await connection.select().table('users').where('id', id);
+            let user = await connection.select().table('users').where('id', id);
             if(user.length > 0){
-                return {status: true, user: user[0]};
+                const { password, ...filteredUser } = user[0]
+                user[0] = filteredUser;
+                return { status: true, user: user[0] };
             }
             else{
-                return {status: false, message: "User not found"};
+                return { status: false, message: "User not found" };
             }
         }
         catch(err){
             console.log(err);
-            return {status: false, error: err, message: "An error occurred"}
+            return { status: false, error: err, message: "An error occurred" }
         }
     }
 
@@ -174,7 +180,7 @@ class UserService{
                     }
                     await connection.update({ ...user, profilePicture: profilePictureSetted?.profilePictureUrl }).table('users').where('id', id);
                     const updatedUser = await this.getUserById(id);
-                    return {status: true, user: updatedUser.user};
+                    return {status: true, user: updatedUser.user, message: "User updated"};
                 }
                 catch(err){
                     console.log(err);
@@ -191,57 +197,71 @@ class UserService{
     }
 
     async changePassword(id: string, newPassword: string, currentPassword: string){
-        const userExists = await this.getUserById(id);
-        if(userExists.status){
-            try{
-                if(await this.validatePassword(currentPassword, userExists.user.password)){
-                    if((await this.updateUser({password: newPassword} as User, id)).status){
-                        return {status: true, message: "Password changed"};
+        try{
+            const userExists = await connection.select().table("users").where("id", id);
+            if(userExists[0]){
+                try{
+                    if(await this.validatePassword(currentPassword, userExists[0].password)){
+                        if((await this.updateUser({password: newPassword} as User, id)).status){
+                            return { status: true, message: "Password changed" };
+                        }
+                        else{
+                            return { status: false, message: "An error occurred" };
+                        }
                     }
                     else{
-                        return {status: false, message: "An error occurred"};
+                        return { status: false, message: "Wrong password" }
                     }
                 }
-                else{
-                    return {status: false, message: "Wrong password"}
+                catch(err){
+                    console.log(err);
+                    return { status: false, error: err, message: "An error occurred" };
                 }
             }
-            catch(err){
-                console.log(err);
-                return {status: false, error: err, message: "An error occurred"};
+            else{
+                return { status: false, message: "User not found" };
             }
         }
-        else{
-            return {status: false, message: "User not found"};
+        catch(error){
+            console.log(error);
+            return { status: false, error, message: "An error occurred" };
         }
+        
     }
 
     async deleteUser(id: string, password?: string){
-        const userExists = await this.getUserById(id);
-        if(userExists.status){
-            try{
-                if(password){
-                    if(!(await this.validatePassword(password, userExists.user.password))){
-                        return { status: false, message: "Invalid password" };
-                    }    
-                }
-                if(userExists.user.profilePicture !== "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/profile-pictures%2Fnull.jpg?alt=media&token=0a7059e9-f572-4043-b5f9-7478e52f3234"){
-                    const imageDeleted = await this.deleteProfilePicture(userExists.user.profilePicture);
-                    if(!imageDeleted.status){
-                        return { status: false, message: "Error deleting the image" };
+        try{
+            const userExists = await connection.select().table("users").where("id", id);
+            if(userExists[0]){
+                try{
+                    if(password){
+                        if(!(await this.validatePassword(password, userExists[0].password))){
+                            return { status: false, message: "Invalid password" };
+                        }    
                     }
+                    if(userExists[0].profilePicture !== "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/profile-pictures%2Fnull.jpg?alt=media&token=0a7059e9-f572-4043-b5f9-7478e52f3234"){
+                        const imageDeleted = await this.deleteProfilePicture(userExists[0].profilePicture);
+                        if(!imageDeleted.status){
+                            return { status: false, message: "Error deleting the image" };
+                        }
+                    }
+                    await connection.del().table('users').where("id", id);
+                    return { status: true, message: "Deleted successfully" };
                 }
-                await connection.del().table('users').where('id', id);
-                return { status: true, message: "Deleted successfully" };
+                catch(err){
+                    console.log(err);
+                    return { status: false, error: err, message: "An error occurred" };
+                }
             }
-            catch(err){
-                console.log(err);
-                return { status: false, error: err, message: "An error occurred" };
+            else{
+                return { status: false, message: "User not found" };
             }
         }
-        else{
-            return {status: false, message: "User not found"};
+        catch(error){
+            console.log(error);
+            return { status: false, message: "An error occurred", error };
         }
+        
     }
 
     async validatePassword(password: string, encryptedPassword: string){
