@@ -5,7 +5,9 @@ import { Request, Response } from 'express';
 class UserController{
 
     async getUsers(req: Request, res: Response){
-        const result = await UserService.getUsers();
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const offset = parseInt(req.query.offset as string, 10) || 0;
+        const result = await UserService.getUsers(limit, offset);
         result.status ? res.status(200).json({users: result.users}) : res.status(500).json({error: result.error});
     }
 

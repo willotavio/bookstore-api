@@ -5,7 +5,9 @@ import { Request, Response } from 'express';
 class AuthorController{
 
     async getAuthors(req: Request, res: Response){
-        const result = await AuthorService.getAuthors();
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const offset = parseInt(req.query.offset as string, 10) || 0;
+        const result = await AuthorService.getAuthors(limit, offset);
         result.status ? res.status(200).json({authors: result.authors}) : res.status(500).json({message: result.message});
     }
 

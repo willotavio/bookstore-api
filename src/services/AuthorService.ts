@@ -9,9 +9,9 @@ export interface Author {
 
 class AuthorService{
 
-    async getAuthors(){
+    async getAuthors(limit: number, offset: number){
         try{
-            const authors = await connection.select().table('authors');
+            const authors = await connection.select().table('authors').limit(limit).offset(offset);
             return {status: true, authors};
         }
         catch(err){

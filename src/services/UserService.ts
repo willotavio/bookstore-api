@@ -46,9 +46,9 @@ class UserService{
         })
     }
 
-    async getUsers(){
+    async getUsers(limit: number, offset: number){
         try{
-            let users: User[] = await connection.select().table('users');
+            let users: User[] = await connection.select().table('users').limit(limit).offset(offset);
             users = users.map((user) => {
                 const { password, ...filteredUser } = user
                 return filteredUser;

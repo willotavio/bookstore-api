@@ -5,7 +5,9 @@ import { Book } from '../services/BookService';
 class BookController{
 
     async getBooks(req: Request, res: Response){
-        const result = await BookService.getBooks();
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const offset = parseInt(req.query.offset as string, 10) || 0;
+        const result = await BookService.getBooks(limit, offset);
         result.status ? res.status(200).json({books: result.books}) : res.status(500).json({message: result.message});
     }
 

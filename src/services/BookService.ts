@@ -15,14 +15,14 @@ export interface Book{
 
 class BookService{
 
-    async getBooks(){
+    async getBooks(limit: number, offset: number){
         try{
-            const books = await connection.select().table('books');
-            return {status: true, books: books};
+            const books = await connection.select().table('books').limit(limit).offset(offset);
+            return { status: true, books: books };
         }
         catch(err){
             console.log(err);
-            return {status: false, message: "An error occurred"};
+            return { status: false, message: "An error occurred" };
         }
     }
 
