@@ -17,7 +17,7 @@ class BookService{
 
     async getBooks(limit: number, offset: number){
         try{
-            const books = await connection.select().table('books').limit(limit).offset(offset);
+            const books = await connection.select('books.*', 'authors.name as authorName').table('books').limit(limit).offset(offset).join('authors', 'books.authorId', '=', 'authors.id');
             return { status: true, books: books };
         }
         catch(err){
@@ -28,7 +28,7 @@ class BookService{
 
     async getBookById(id: string){
         try{
-            const book = await connection.select().table('books').where('id', id);
+            const book = await connection.select('books.*', 'authors.name as authorName').table('books').where('books.id', id).join('authors', 'books.authorId', '=', 'authors.id');
             if(book.length > 0){
                 return {status: true, book: book[0]}
             }
