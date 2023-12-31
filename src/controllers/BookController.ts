@@ -7,18 +7,19 @@ class BookController{
     async getBooks(req: Request, res: Response){
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const offset = parseInt(req.query.offset as string, 10) || 0;
-        const result = await BookService.getBooks(limit, offset);
-        result.status ? res.status(200).json({books: result.books}) : res.status(500).json({message: result.message});
+        const searchTitle = req.query.searchTitle as string || "";
+        const result = await BookService.getBooks(limit, offset, searchTitle);
+        result.status ? res.status(200).json({ books: result.books }) : res.status(500).json({ message: result.message });
     }
 
     async getBookById(req: Request, res: Response){
         const id = req.params.bookId;
         const result = await BookService.getBookById(id);
         if(result.status){
-            res.status(200).json({book: result.book});
+            res.status(200).json({ book: result.book });
             return;
         }
-        res.status(404).json({message: result.message});
+        res.status(404).json({ message: result.message });
     }
 
     async addBook(req: Request, res: Response){

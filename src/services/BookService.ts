@@ -15,9 +15,15 @@ export interface Book{
 
 class BookService{
 
-    async getBooks(limit: number, offset: number){
+    async getBooks(limit: number, offset: number, searchTitle?: string){
         try{
-            const books = await connection.select('books.*', 'authors.name as authorName').table('books').limit(limit).offset(offset).join('authors', 'books.authorId', '=', 'authors.id');
+            let books;
+            if(searchTitle){
+                books = await connection.select('books.*', 'authors.name as authorName').table('books').limit(limit).offset(offset).join('authors', 'books.authorId', '=', 'authors.id').where("books.title", "like", `%${ searchTitle }%`);
+            }
+            else{
+                books = await connection.select('books.*', 'authors.name as authorName').table('books').limit(limit).offset(offset).join('authors', 'books.authorId', '=', 'authors.id');
+            }
             return { status: true, books: books };
         }
         catch(err){
@@ -53,7 +59,8 @@ class BookService{
                 }
             }
             await connection.insert({ ...book, id, coverImage: coverImageSetted?.status ? coverImageSetted.coverImageUrl : "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/book-covers%2Fnull.jpg?alt=media&token=575e25b9-fc67-4dd7-ae6f-82aa609d64a7" }).table('books');
-            return { status: true, message: "Book created", book: { ...book, id, coverImage: coverImageSetted?.status ? coverImageSetted.coverImageUrl : "https://firebasestorage.googleapis.com/v0/b/bookstore-api-b889d.appspot.com/o/book-covers%2Fnull.jpg?alt=media&token=575e25b9-fc67-4dd7-ae6f-82aa609d64a7" } };
+            const addedBook = await this.getBookById(id);
+            return { status: true, message: "Book created", book: addedBook.book };
         }
         catch(err){
             console.log(err);

@@ -9,14 +9,20 @@ export interface Author {
 
 class AuthorService{
 
-    async getAuthors(limit: number, offset: number){
+    async getAuthors(limit: number, offset: number, searchName?: string){
         try{
-            const authors = await connection.select().table('authors').limit(limit).offset(offset);
-            return {status: true, authors};
+            let authors;
+            if(searchName){
+                authors = await connection.select().table('authors').limit(limit).offset(offset).where("authors.name", "like", `%${ searchName }%`);
+            }
+            else{
+                authors = await connection.select().table('authors').limit(limit).offset(offset);
+            }
+            return { status: true, authors };
         }
         catch(err){
             console.log(err);
-            return {status: false, message: "An error occurred"};
+            return { status: false, message: "An error occurred" };
         }
     }
 

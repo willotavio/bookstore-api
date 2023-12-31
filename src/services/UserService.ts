@@ -46,14 +46,21 @@ class UserService{
         })
     }
 
-    async getUsers(limit: number, offset: number){
+    async getUsers(limit: number, offset: number, searchName?: string){
         try{
-            let users: User[] = await connection.select().table('users').limit(limit).offset(offset);
+            let users: User[];
+            if(searchName){
+                users = await connection.select().table('users').limit(limit).offset(offset).where("users.name", "like", `%${ searchName }%`);
+            }
+            else{
+                users = await connection.select().table('users').limit(limit).offset(offset);
+            }
+            
             users = users.map((user) => {
                 const { password, ...filteredUser } = user
                 return filteredUser;
             });
-            return {status: true, users};
+            return { status: true, users };
         }
         catch(err){
             console.log(err);
@@ -116,7 +123,7 @@ class UserService{
         }
         catch(err){
             console.log(err);
-            return {status: false, error: err, message: "An error occurred"};
+            return { status: false, error: err, message: "An error occurred" };
         }
     }
 

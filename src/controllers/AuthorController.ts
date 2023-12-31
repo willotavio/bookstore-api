@@ -7,19 +7,20 @@ class AuthorController{
     async getAuthors(req: Request, res: Response){
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const offset = parseInt(req.query.offset as string, 10) || 0;
-        const result = await AuthorService.getAuthors(limit, offset);
-        result.status ? res.status(200).json({authors: result.authors}) : res.status(500).json({message: result.message});
+        const searchName = req.query.searchName as string || "";
+        const result = await AuthorService.getAuthors(limit, offset, searchName);
+        result.status ? res.status(200).json({ authors: result.authors }) : res.status(500).json({ message: result.message });
     }
 
     async getAuthorById(req: Request, res: Response){
         const id = req.params.authorId;
         const result = await AuthorService.getAuthorById(id);
         if(result.status){
-            res.status(200).json({author: result.author});
+            res.status(200).json({ author: result.author });
             return;
         }
         else{
-            res.status(404).json({message: result.message});
+            res.status(404).json({ message: result.message });
             return;
         }
     }
